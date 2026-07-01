@@ -42,16 +42,20 @@ export default {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
       }
       if (!body.image) return new Response(JSON.stringify({ error: 'No image' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: 'image/jpeg', data: body.image } }] }]
-          })
-        }
-      );
+      const isAQKey = env.GEMINI_KEY && env.GEMINI_KEY.startsWith('AQ.');
+      const geminiUrl = isAQKey
+        ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+        : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_KEY}`;
+      const geminiHeaders = { 'Content-Type': 'application/json' };
+      if (isAQKey) geminiHeaders['Authorization'] = `Bearer ${env.GEMINI_KEY}`;
+
+      const geminiRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: geminiHeaders,
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: 'image/jpeg', data: body.image } }] }]
+        })
+      });
       if (!geminiRes.ok) {
         const errBody = await geminiRes.json().catch(() => ({}));
         const msg = errBody?.error?.message || `Gemini HTTP ${geminiRes.status}`;
