@@ -565,6 +565,7 @@ async function callVision(base64) {
 
   // ── Path 1: Cloudflare Worker proxy ──────────────────────────────────────
   if (serverUrl) {
+    document.getElementById('scanSpinner').textContent = '🤖 Gemini AI से पढ़ रहे हैं...';
     const res = await fetch(serverUrl.replace(/\/$/, '') + '/vision', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
