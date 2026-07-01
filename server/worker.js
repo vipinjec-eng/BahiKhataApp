@@ -74,7 +74,7 @@ export default {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
         }
         if (!env.BAHI_KV) return new Response(JSON.stringify({ error: 'KV not configured' }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
-        await env.BAHI_KV.put(kvKey, JSON.stringify({ entries: body.entries || [], savedAt: new Date().toISOString() }), { expirationTtl: 60 * 60 * 24 * 365 });
+        await env.BAHI_KV.put(kvKey, JSON.stringify({ entries: body.entries || [], savedAt: new Date().toISOString() }));
         return new Response(JSON.stringify({ ok: true }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
       }
 

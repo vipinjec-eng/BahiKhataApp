@@ -1052,19 +1052,23 @@ function showToast(msg) {
   toastTimer = setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.add('hidden'), 260); }, 2500);
 }
 
-document.getElementById('fDate').addEventListener('change', e => {
-  document.getElementById('fDateBtn').textContent = '📅 ' + (e.target.value ? fmtDate(e.target.value) : 'तारीख़ चुनें');
+document.getElementById('fDate')?.addEventListener('change', e => {
+  const b = document.getElementById('fDateBtn');
+  if (b) b.textContent = '📅 ' + (e.target.value ? fmtDate(e.target.value) : 'तारीख़ चुनें');
 });
 
-document.getElementById('fDue').addEventListener('change', e => {
-  document.getElementById('fDueBtn').textContent = e.target.value ? '⏰ ' + fmtDate(e.target.value) : '⏰ तारीख़ चुनें (वैकल्पिक)';
+document.getElementById('fDue')?.addEventListener('change', e => {
+  const b = document.getElementById('fDueBtn');
+  if (b) b.textContent = e.target.value ? '⏰ ' + fmtDate(e.target.value) : '⏰ तारीख़ चुनें (वैकल्पिक)';
 });
-document.getElementById('fDueClearBtn').addEventListener('click', () => {
-  document.getElementById('fDue').value = '';
-  document.getElementById('fDueBtn').textContent = '⏰ तारीख़ चुनें (वैकल्पिक)';
+document.getElementById('fDueClearBtn')?.addEventListener('click', () => {
+  const inp = document.getElementById('fDue');
+  if (inp) inp.value = '';
+  const b = document.getElementById('fDueBtn');
+  if (b) b.textContent = '⏰ तारीख़ चुनें (वैकल्पिक)';
 });
 
-document.getElementById('fAmount').addEventListener('input', e => {
+document.getElementById('fAmount')?.addEventListener('input', e => {
   const pos = e.target.selectionStart;
   const converted = toDevNum(e.target.value.replace(/[^\d०-९]/g, ''));
   e.target.value = converted;
