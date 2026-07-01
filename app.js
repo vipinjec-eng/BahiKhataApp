@@ -306,7 +306,9 @@ function openForm(entry = null) {
   document.getElementById('fName').value = entry ? entry.name : '';
   document.getElementById('fAmount').value = entry ? entry.amount : '';
   document.getElementById('fType').value = entry ? entry.type : 'udhar';
-  document.getElementById('fDate').value = entry ? entry.date : todayISO();
+  const fDateVal = entry ? entry.date : todayISO();
+  document.getElementById('fDate').value = fDateVal;
+  document.getElementById('fDateBtn').textContent = '📅 ' + fmtDate(fDateVal);
   document.getElementById('fNote').value = entry ? (entry.note || '') : '';
   document.getElementById('fStar').checked = entry ? !!entry.star : false;
 
@@ -934,6 +936,10 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.add('hidden'), 260); }, 2500);
 }
+
+document.getElementById('fDate').addEventListener('change', e => {
+  document.getElementById('fDateBtn').textContent = '📅 ' + (e.target.value ? fmtDate(e.target.value) : 'तारीख़ चुनें');
+});
 
 // ── SERVICE WORKER REGISTRATION ────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
