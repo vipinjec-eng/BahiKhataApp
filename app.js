@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v29';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -1126,25 +1126,30 @@ document.getElementById('cloudDisableBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('cloudConfirmBtn')?.addEventListener('click', async () => {
-  const code = (document.getElementById('cloudCodeInput')?.value || '').trim();
-  if (!code) { cloudMsg('⚠️ कोड ज़रूरी है', 'err'); showToast('कोड ज़रूरी है'); return; }
-  if (cloudModalMode === 'restore') {
-    await cloudRestore(code);
-  } else {
-    saveBackupCode(code);
-    cloudEnabled = true;
-    updateCloudStatus();
-    cloudMsg('☁️ बैकअप हो रहा है...', '');
-    showToast('बैकअप हो रहा है...');
-    const r = await pushCloudBackupNow(true);
-    if (r.ok) {
-      cloudMsg(`✓ बैकअप हो गया (${toDevNum(entries.length)} entries)`, 'ok');
-      showToast(`✓ बैकअप चालू (${toDevNum(entries.length)} entries)`);
-      setTimeout(() => document.getElementById('cloudModal').classList.add('hidden'), 1200);
+  try {
+    const code = (document.getElementById('cloudCodeInput')?.value || '').trim();
+    if (!code) { cloudMsg('⚠️ कोड ज़रूरी है', 'err'); showToast('कोड ज़रूरी है'); return; }
+    if (cloudModalMode === 'restore') {
+      await cloudRestore(code);
     } else {
-      cloudMsg('✗ बैकअप नहीं हुआ: ' + r.error, 'err');
-      showToast('✗ बैकअप नहीं हुआ: ' + r.error);
+      saveBackupCode(code);
+      cloudEnabled = true;
+      updateCloudStatus();
+      cloudMsg('☁️ बैकअप हो रहा है...', '');
+      showToast('बैकअप हो रहा है...');
+      const r = await pushCloudBackupNow(true);
+      if (r.ok) {
+        cloudMsg(`✓ बैकअप हो गया (${toDevNum(entries.length)} entries)`, 'ok');
+        showToast(`✓ बैकअप चालू (${toDevNum(entries.length)} entries)`);
+        setTimeout(() => document.getElementById('cloudModal').classList.add('hidden'), 1200);
+      } else {
+        cloudMsg('✗ बैकअप नहीं हुआ: ' + r.error, 'err');
+        showToast('✗ बैकअप नहीं हुआ: ' + r.error);
+      }
     }
+  } catch (err) {
+    cloudMsg('✗ गड़बड़ी: ' + err.message, 'err');
+    showToast('✗ गड़बड़ी: ' + err.message);
   }
 });
 
@@ -1300,7 +1305,17 @@ if (_vt) _vt.textContent = 'प्रभुति ट्रेडर्स · ' 
 
 // ── SERVICE WORKER REGISTRATION ────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    // when a new SW takes control, reload once so fresh code + HTML load together
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+    // check for updates on each load
+    reg.update().catch(() => {});
+  }).catch(() => {});
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
