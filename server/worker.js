@@ -43,7 +43,7 @@ export default {
       }
       if (!body.image) return new Response(JSON.stringify({ error: 'No image' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
       const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
