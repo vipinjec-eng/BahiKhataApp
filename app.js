@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v43';
+const APP_VERSION = 'v44';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -749,27 +749,6 @@ function waShareAll() {
 
 document.getElementById('whatsAppAllBtn').addEventListener('click', waShareAll);
 
-// ── SETTINGS MODAL ─────────────────────────────────────────────────────────
-document.getElementById('settingsBtn').addEventListener('click', openSettings);
-document.getElementById('scanSettingsBtn').addEventListener('click', openSettings);
-function openSettings() {
-  document.getElementById('settingsGeminiKey').value = localStorage.getItem('bahi_gemini_key') || '';
-  document.getElementById('settingsServerUrl').value = localStorage.getItem('bahi_server_url') || '';
-  document.getElementById('settingsServerPass').value = localStorage.getItem('bahi_server_pass') || '';
-  document.getElementById('settingsModal').classList.remove('hidden');
-}
-document.getElementById('settingsCancelBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.add('hidden'));
-document.getElementById('settingsModal').addEventListener('click', e => { if (e.target === document.getElementById('settingsModal')) document.getElementById('settingsModal').classList.add('hidden'); });
-document.getElementById('settingsSaveBtn').addEventListener('click', () => {
-  const key = document.getElementById('settingsGeminiKey').value.trim();
-  const url = document.getElementById('settingsServerUrl').value.trim();
-  const pass = document.getElementById('settingsServerPass').value.trim();
-  if (key) localStorage.setItem('bahi_gemini_key', key); else localStorage.removeItem('bahi_gemini_key');
-  if (url) localStorage.setItem('bahi_server_url', url); else localStorage.removeItem('bahi_server_url');
-  if (pass) localStorage.setItem('bahi_server_pass', pass); else localStorage.removeItem('bahi_server_pass');
-  document.getElementById('settingsModal').classList.add('hidden');
-  showToast('सेटिंग सेव हुई ✓');
-});
 
 // ── SCAN (OCR) FLOW ────────────────────────────────────────────────────────
 const GEMINI_PROMPT = `यह एक हिसाब रजिस्टर का फोटो है। इसमें से हर entry को पढ़कर नीचे दिए format में JSON array दो।

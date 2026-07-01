@@ -15,7 +15,6 @@
 
 <header class="topbar">
   <h1>📖 प्रभुति ट्रेडर्स</h1>
-  <button id="settingsBtn" class="icon-btn" title="सेटिंग">⚙️</button>
 </header>
 
 <div id="remindersBanner"></div>
@@ -156,8 +155,6 @@
       <button type="button" id="scanRunBtn" class="btn-primary hidden">🔍 पढ़ना शुरू करें</button>
       <div id="scanSpinner" class="spinner hidden">पढ़ रहे हैं...</div>
       <p id="scanError" class="error-text hidden"></p>
-      <hr>
-      <button type="button" id="scanSettingsBtn" class="footer-btn">⚙️ Key / सर्वर सेटिंग</button>
     </div>
     <div id="scanReviewWrap" class="hidden">
       <p class="muted">हर entry जाँच लें, ज़रूरत हो तो ठीक करें। जो नहीं जोड़नी उसका ✓ हटा दें।</p>
@@ -168,29 +165,6 @@
       </div>
     </div>
     <button type="button" id="scanCloseBtn" class="btn-secondary close-bottom">बंद करें</button>
-  </div>
-</div>
-
-<!-- Settings Modal (Gemini key / server) -->
-<div id="settingsModal" class="modal hidden">
-  <div class="modal-card">
-    <h2>⚙️ सेटिंग</h2>
-    <p class="muted">फोटो से entries पढ़ने के लिए इनमें से एक तरीका चुनें — अपनी मुफ़्त Gemini key, या मुफ़्त सर्वर (अगर किसी ने बनाया है)।</p>
-    <label>अपनी मुफ़्त Gemini key
-      <input type="text" id="settingsGeminiKey" placeholder="AIza...">
-    </label>
-    <p class="muted small">key यहाँ से मुफ़्त मिलती है: aistudio.google.com/apikey</p>
-    <hr>
-    <label>मुफ़्त सर्वर URL (वैकल्पिक)
-      <input type="text" id="settingsServerUrl" placeholder="https://xxx.workers.dev">
-    </label>
-    <label>सर्वर पासवर्ड (अगर सेट किया हो)
-      <input type="text" id="settingsServerPass" placeholder="वैकल्पिक">
-    </label>
-    <div class="modal-actions">
-      <button type="button" id="settingsCancelBtn" class="btn-secondary">रद्द करें</button>
-      <button type="button" id="settingsSaveBtn" class="btn-primary">सेव करें</button>
-    </div>
   </div>
 </div>
 
