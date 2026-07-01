@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v25';
+const APP_VERSION = 'v26';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -686,7 +686,7 @@ function waSharePerson(name) {
     `${displayDate(e.date)} — ${e.direction === 'diya' ? 'दिया' : 'लिया'} ₹${e.amount.toLocaleString('en-IN')} (${TYPE_LABELS[e.type]})${e.note ? ' — ' + e.note : ''}${e.star ? ' ⭐' : ''}`
   );
   const bLabel = baki >= 0 ? `आना है: ₹${baki.toLocaleString('en-IN')}` : `देना है: ₹${Math.abs(baki).toLocaleString('en-IN')}`;
-  const text = `हिसाब बहीखाता\n\nनमस्ते ${name} जी,\nआपका हिसाब:\n\n${lines.join('\n')}\n\nकुल दिया: ₹${t.diya.toLocaleString('en-IN')}\nकुल लिया: ₹${t.liya.toLocaleString('en-IN')}\n${bLabel}`;
+  const text = `प्रभुति ट्रेडर्स\n\nनमस्ते ${name} जी,\nआपका हिसाब:\n\n${lines.join('\n')}\n\nकुल दिया: ₹${t.diya.toLocaleString('en-IN')}\nकुल लिया: ₹${t.liya.toLocaleString('en-IN')}\n${bLabel}`;
   shareWhatsApp(text);
 }
 
@@ -697,7 +697,7 @@ function waShareDate(date) {
   const lines = dayEntries.map(e =>
     `${esc(e.name)} — ${e.direction === 'diya' ? 'दिया' : 'लिया'} ₹${e.amount.toLocaleString('en-IN')} (${TYPE_LABELS[e.type]})${e.star ? ' ⭐' : ''}`
   );
-  const text = `हिसाब बहीखाता\n📅 ${displayDate(date)} का हिसाब\n\n${lines.join('\n')}\n\nकुल दिया: ₹${t.diya.toLocaleString('en-IN')}\nकुल लिया: ₹${t.liya.toLocaleString('en-IN')}\nबाकी: ${baki >= 0 ? '' : '-'}₹${Math.abs(baki).toLocaleString('en-IN')}`;
+  const text = `प्रभुति ट्रेडर्स\n📅 ${displayDate(date)} का हिसाब\n\n${lines.join('\n')}\n\nकुल दिया: ₹${t.diya.toLocaleString('en-IN')}\nकुल लिया: ₹${t.liya.toLocaleString('en-IN')}\nबाकी: ${baki >= 0 ? '' : '-'}₹${Math.abs(baki).toLocaleString('en-IN')}`;
   shareWhatsApp(text);
 }
 
@@ -705,7 +705,7 @@ function waShareAll() {
   const t = computeTotals(entries);
   const baki = t.diya - t.liya;
   const bLabel = baki >= 0 ? `आना है: ₹${baki.toLocaleString('en-IN')}` : `देना है: ₹${Math.abs(baki).toLocaleString('en-IN')}`;
-  const text = `📖 हिसाब बहीखाता — कुल सारांश\n\nकुल एंट्री: ${entries.length}\nकुल दिया: ₹${t.diya.toLocaleString('en-IN')}\nकुल लिया: ₹${t.liya.toLocaleString('en-IN')}\n${bLabel}`;
+  const text = `📖 प्रभुति ट्रेडर्स — कुल सारांश\n\nकुल एंट्री: ${entries.length}\nकुल दिया: ₹${t.diya.toLocaleString('en-IN')}\nकुल लिया: ₹${t.liya.toLocaleString('en-IN')}\n${bLabel}`;
   shareWhatsApp(text);
 }
 
