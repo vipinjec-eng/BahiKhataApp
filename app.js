@@ -47,6 +47,7 @@ let scanResultRows = [];
 let cloudEnabled = !!localStorage.getItem('bahi_backup_code');
 let cloudDirty = false;
 let cloudTimer = null;
+let selectedDateFilter = '';
 
 // ── IndexedDB PHOTO STORE ──────────────────────────────────────────────────
 let photoDB = null;
@@ -243,32 +244,53 @@ function renderPeople(list) {
 
 function renderDates(list) {
   const content = document.getElementById('content');
+
+  const picker = `<div class="date-picker-bar">
+    <input type="date" id="datePicker" value="${selectedDateFilter}" style="flex:1;padding:8px 10px;border:1.5px solid var(--green);border-radius:8px;font-size:1rem;background:var(--bg);color:var(--text)">
+    ${selectedDateFilter ? `<button id="datePickerClear" class="btn-secondary" style="padding:8px 14px;white-space:nowrap">✕ सभी</button>` : ''}
+  </div>`;
+
   if (!list.length) {
-    content.innerHTML = `<div class="empty-state"><span class="emoji">📅</span>कोई एंट्री नहीं है।</div>`;
-    return;
+    content.innerHTML = picker + `<div class="empty-state"><span class="emoji">📅</span>कोई एंट्री नहीं है।</div>`;
+  } else {
+    const filtered = selectedDateFilter ? list.filter(e => e.date === selectedDateFilter) : list;
+    const groups = {};
+    filtered.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
+    const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+    const cardsHtml = sortedDates.length ? sortedDates.map(date => {
+      const dayEntries = groups[date];
+      const t = computeTotals(dayEntries);
+      const baki = t.diya - t.liya;
+      return `<div class="date-card">
+        <div class="date-card-header">
+          <div class="date-card-date">${fmtDate(date)}</div>
+          <button class="footer-btn btn-wa" data-wa-date="${esc(date)}" style="width:auto;padding:6px 10px;font-size:.8rem">${WA_SVG} भेजें</button>
+        </div>
+        <div class="date-card-summary">दिया: ${fmtAmount(t.diya)} · लिया: ${fmtAmount(t.liya)} · बाकी: ${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</div>
+        <div class="date-card-entries">
+          ${dayEntries.map(e => `<div class="date-entry-row" data-id="${esc(e.id)}" style="cursor:pointer">
+            <span>${esc(e.name)}${e.star?' ⭐':''} <span class="type-tag">${TYPE_LABELS[e.type]}</span></span>
+            <span style="font-weight:700;color:${e.direction==='diya'?'var(--green)':'var(--red)'}">${e.direction==='diya'?'दिया':'लिया'} ${fmtAmount(e.amount)}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty-state"><span class="emoji">📅</span>इस तारीख़ पर कोई एंट्री नहीं।</div>`;
+
+    content.innerHTML = picker + cardsHtml;
+    content.querySelectorAll('[data-wa-date]').forEach(btn => btn.addEventListener('click', () => waShareDate(btn.dataset.waDate)));
+    content.querySelectorAll('[data-id]').forEach(row => row.addEventListener('click', () => {
+      const e = entries.find(x => x.id === row.dataset.id);
+      if (e) openForm(e);
+    }));
   }
-  const groups = {};
-  list.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
-  const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
-  content.innerHTML = sortedDates.map(date => {
-    const dayEntries = groups[date];
-    const t = computeTotals(dayEntries);
-    const baki = t.diya - t.liya;
-    return `<div class="date-card">
-      <div class="date-card-header">
-        <div class="date-card-date">${fmtDate(date)}</div>
-        <button class="footer-btn btn-wa" data-wa-date="${esc(date)}" style="width:auto;padding:6px 10px;font-size:.8rem">${WA_SVG} भेजें</button>
-      </div>
-      <div class="date-card-summary">दिया: ${fmtAmount(t.diya)} · लिया: ${fmtAmount(t.liya)} · बाकी: ${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</div>
-      <div class="date-card-entries">
-        ${dayEntries.map(e => `<div class="date-entry-row">
-          <span>${esc(e.name)}${e.star?' ⭐':''} <span class="type-tag">${TYPE_LABELS[e.type]}</span></span>
-          <span style="font-weight:700;color:${e.direction==='diya'?'var(--green)':'var(--red)'}">${e.direction==='diya'?'दिया':'लिया'} ${fmtAmount(e.amount)}</span>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
-  content.querySelectorAll('[data-wa-date]').forEach(btn => btn.addEventListener('click', () => waShareDate(btn.dataset.waDate)));
+
+  document.getElementById('datePicker').addEventListener('change', e => {
+    selectedDateFilter = e.target.value;
+    render();
+  });
+  const clearBtn = document.getElementById('datePickerClear');
+  if (clearBtn) clearBtn.addEventListener('click', () => { selectedDateFilter = ''; render(); });
 }
 
 // ── FORM MODAL ─────────────────────────────────────────────────────────────

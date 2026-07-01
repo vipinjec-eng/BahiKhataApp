@@ -191,6 +191,7 @@ main { padding: 10px 12px; }
 .person-footer button { flex: 1; min-width: 120px; }
 
 /* DATE TAB */
+.date-picker-bar { display:flex; gap:8px; align-items:center; padding:10px 14px 6px; background:var(--bg); }
 .date-card {
   background: #fff;
   border-radius: var(--radius);
