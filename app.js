@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v23';
+const APP_VERSION = 'v24';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -957,59 +957,80 @@ function updateCloudStatus() {
   }
 }
 
-document.getElementById('cloudToggleBtn').addEventListener('click', () => {
-  const code = getBackupCode();
-  if (code) {
-    // show options: change or disable
-    const action = confirm('बैकअप कोड बदलना चाहते हैं? OK = बदलें, Cancel = बैकअप बंद करें');
-    if (action) openCloudModal('change');
-    else { clearBackupCode(); updateCloudStatus(); showToast('अपने-आप बैकअप बंद हुआ'); }
-  } else {
-    openCloudModal('enable');
-  }
-});
+let cloudModalMode = 'enable'; // 'enable' or 'restore'
 
+function cloudMsg(text, kind) {
+  const m = document.getElementById('cloudMsg');
+  if (!m) return;
+  m.textContent = text || '';
+  m.className = 'cloud-msg' + (kind ? ' ' + kind : '');
+}
+
+document.getElementById('cloudToggleBtn').addEventListener('click', () => openCloudModal('enable'));
 document.getElementById('cloudRestoreBtn').addEventListener('click', () => openCloudModal('restore'));
 
 function openCloudModal(mode) {
+  cloudModalMode = mode;
   const modal = document.getElementById('cloudModal');
   const title = document.getElementById('cloudModalTitle');
   const desc = document.getElementById('cloudModalDesc');
-  const confirm = document.getElementById('cloudConfirmBtn');
+  const confirmBtn = document.getElementById('cloudConfirmBtn');
+  const disableBtn = document.getElementById('cloudDisableBtn');
+  const existing = getBackupCode();
+
   if (mode === 'restore') {
     title.textContent = '🔑 कोड से डेटा वापस लाएँ';
     desc.textContent = 'जो बैकअप कोड आपने सेट किया था वो डालें — सारा हिसाब वापस आ जाएगा।';
-    confirm.dataset.mode = 'restore';
+    confirmBtn.textContent = '⬇️ वापस लाएँ';
+    disableBtn.style.display = 'none';
   } else {
     title.textContent = '☁️ अपने-आप बैकअप';
     desc.textContent = 'एक बैकअप कोड चुनें (कोई भी शब्द/नंबर)। यह कोड याद रखें — नए फ़ोन में डेटा वापस लाने के लिए यही काम आएगा।';
-    confirm.dataset.mode = 'enable';
+    confirmBtn.textContent = existing ? '💾 अभी बैकअप करें' : '✓ चालू करें';
+    disableBtn.style.display = existing ? 'block' : 'none';
   }
-  document.getElementById('cloudCodeInput').value = '';
+  document.getElementById('cloudCodeInput').value = existing || '';
+  cloudMsg('');
   modal.classList.remove('hidden');
 }
+
 document.getElementById('cloudCancelBtn').addEventListener('click', () => document.getElementById('cloudModal').classList.add('hidden'));
 document.getElementById('cloudModal').addEventListener('click', e => { if (e.target === document.getElementById('cloudModal')) document.getElementById('cloudModal').classList.add('hidden'); });
+
+document.getElementById('cloudDisableBtn').addEventListener('click', () => {
+  clearBackupCode();
+  localStorage.removeItem('bahi_last_backup_time');
+  updateCloudStatus();
+  document.getElementById('cloudModal').classList.add('hidden');
+  showToast('अपने-आप बैकअप बंद हुआ');
+});
+
 document.getElementById('cloudConfirmBtn').addEventListener('click', async () => {
   const code = document.getElementById('cloudCodeInput').value.trim();
-  if (!code) { showToast('कोड ज़रूरी है'); return; }
-  const mode = document.getElementById('cloudConfirmBtn').dataset.mode;
-  if (mode === 'restore') {
+  if (!code) { cloudMsg('⚠️ कोड ज़रूरी है', 'err'); return; }
+  if (cloudModalMode === 'restore') {
     await cloudRestore(code);
   } else {
     saveBackupCode(code);
+    cloudEnabled = true;
     updateCloudStatus();
-    document.getElementById('cloudModal').classList.add('hidden');
-    pushCloudBackupNow();
-    showToast('अपने-आप बैकअप चालू हो गया ✓');
+    cloudMsg('☁️ बैकअप हो रहा है...', '');
+    const r = await pushCloudBackupNow(true);
+    if (r.ok) {
+      cloudMsg(`✓ बैकअप हो गया (${toDevNum(entries.length)} entries)`, 'ok');
+      showToast('अपने-आप बैकअप चालू ✓');
+      setTimeout(() => document.getElementById('cloudModal').classList.add('hidden'), 900);
+    } else {
+      cloudMsg('✗ बैकअप नहीं हुआ: ' + r.error, 'err');
+    }
   }
 });
 
-async function pushCloudBackupNow() {
+async function pushCloudBackupNow(report) {
   const code = getBackupCode();
   const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
   const serverPass = localStorage.getItem('bahi_server_pass') || '';
-  if (!code) return;
+  if (!code) return { ok: false, error: 'कोई कोड नहीं' };
   try {
     const res = await fetch(serverUrl.replace(/\/$/, '') + '/backup/' + encodeURIComponent(code), {
       method: 'POST',
@@ -1020,28 +1041,38 @@ async function pushCloudBackupNow() {
       const now = new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
       localStorage.setItem('bahi_last_backup_time', now);
       updateCloudStatus();
+      return { ok: true };
     }
-  } catch { /* silent */ }
+    const err = await res.json().catch(() => ({}));
+    return { ok: false, error: (err.error || ('HTTP ' + res.status)) };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
 }
 
 async function cloudRestore(code) {
   const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
   const serverPass = localStorage.getItem('bahi_server_pass') || '';
-  showToast('डेटा वापस ला रहे हैं...');
+  cloudMsg('⬇️ डेटा ला रहे हैं...', '');
   try {
     const res = await fetch(serverUrl.replace(/\/$/, '') + '/backup/' + encodeURIComponent(code) + '?password=' + encodeURIComponent(serverPass));
-    if (!res.ok) { showToast('बैकअप नहीं मिला — कोड सही है?'); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      cloudMsg('✗ बैकअप नहीं मिला: ' + (err.error || ('HTTP ' + res.status)) + ' — कोड सही है?', 'err');
+      return;
+    }
     const data = await res.json();
-    if (!Array.isArray(data.entries)) { showToast('बैकअप डेटा अमान्य है'); return; }
-    if (!confirm(`${data.entries.length} entries वापस लाएँ? मौजूदा डेटा बदल जाएगा।`)) return;
+    if (!Array.isArray(data.entries)) { cloudMsg('✗ बैकअप डेटा अमान्य है', 'err'); return; }
     entries = data.entries;
     localStorage.setItem('bahi_entries', JSON.stringify(entries));
     saveBackupCode(code);
+    cloudEnabled = true;
     render();
     updateCloudStatus();
-    document.getElementById('cloudModal').classList.add('hidden');
+    cloudMsg(`✓ ${toDevNum(entries.length)} entries वापस आईं`, 'ok');
     showToast('डेटा वापस आ गया ✓');
-  } catch (err) { showToast('वापसी नहीं हुई: ' + err.message); }
+    setTimeout(() => document.getElementById('cloudModal').classList.add('hidden'), 1000);
+  } catch (err) { cloudMsg('✗ वापसी नहीं हुई: ' + err.message, 'err'); }
 }
 
 function schedulePushBackup() {

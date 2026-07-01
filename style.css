@@ -201,6 +201,11 @@ main { padding: 10px 12px; }
 .pd-type { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pd-amt { font-weight: 700; white-space: nowrap; }
 
+/* CLOUD MSG */
+.cloud-msg { font-size:.82rem; margin:6px 0; min-height:1.1em; text-align:center; }
+.cloud-msg.ok { color:#1e7d4a; font-weight:600; }
+.cloud-msg.err { color:#b02a12; font-weight:600; }
+
 /* REMINDER CHIP + DELETE */
 .reminder-chip { display:inline-block; margin-top:5px; font-size:.72rem; font-weight:600; padding:2px 8px; border-radius:10px; }
 .reminder-chip.due-upcoming { background:#fff4d6; color:#8a6d00; }
