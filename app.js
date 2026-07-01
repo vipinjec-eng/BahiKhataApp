@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v39';
+const APP_VERSION = 'v40';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -442,13 +442,13 @@ function renderPeople(list) {
   content.innerHTML = sorted.map(([name, p]) => {
     const baki = p.diya - p.liya;
     const bCls = baki > 0 ? 'baki-pos' : baki < 0 ? 'baki-neg' : 'baki-zero';
-    const bLabel = baki >= 0 ? `आना है: ${fmtAmount(baki)}` : `देना है: ${fmtAmount(-baki)}`;
+    const bLabel = baki >= 0 ? `<span class="c-baki">आना है: ${fmtAmount(baki)}</span>` : `<span class="c-baki">देना है: ${fmtAmount(-baki)}</span>`;
     const detailRows = p.items
       .slice().sort((a,b) => b.date.localeCompare(a.date))
       .map(e => `<div class="pd-row" data-open-entry="${esc(e.id)}">
         <span class="pd-date">${fmtDate(e.date)}</span>
         <span class="pd-type">${TYPE_LABELS[e.type] || e.type}${e.note ? ' · ' + esc(e.note) : ''}</span>
-        <span class="pd-amt" style="color:${e.direction==='diya'?'var(--green)':'var(--red)'}">${e.direction==='diya'?'दिया':'लिया'} ${fmtAmount(e.amount)}</span>
+        <span class="pd-amt ${e.direction==='diya'?'c-diya':'c-liya'}">${e.direction==='diya'?'दिया':'लिया'} ${fmtAmount(e.amount)}</span>
       </div>`).join('');
     return `<div class="person-card">
       <div class="person-header">
@@ -456,7 +456,7 @@ function renderPeople(list) {
         <div class="person-baki ${bCls}">${(baki < 0 ? '-' : '') + fmtAmount(Math.abs(baki))}</div>
         <button class="icon-btn" data-rename="${esc(name)}" title="नाम सुधारें" style="font-size:1.1rem">✏️</button>
       </div>
-      <div class="person-sub">एंट्री: ${toDevNum(p.count)} · दिया ${fmtAmount(p.diya)} · लिया ${fmtAmount(p.liya)} · ${bLabel}</div>
+      <div class="person-sub">एंट्री: ${toDevNum(p.count)} · <span class="c-diya">दिया ${fmtAmount(p.diya)}</span> · <span class="c-liya">लिया ${fmtAmount(p.liya)}</span> · ${bLabel}</div>
       <details class="person-details">
         <summary>📋 सारी एंट्री देखें (${toDevNum(p.count)})</summary>
         <div class="pd-list">${detailRows}</div>
@@ -506,7 +506,7 @@ function renderDates(list) {
           <div class="date-card-date">${fmtDate(date)}</div>
           <button class="footer-btn btn-wa" data-wa-date="${esc(date)}" style="width:auto;padding:6px 10px;font-size:.8rem">${WA_SVG} भेजें</button>
         </div>
-        <div class="date-card-summary">दिया: ${fmtAmount(t.diya)} · लिया: ${fmtAmount(t.liya)} · बाकी: ${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</div>
+        <div class="date-card-summary"><span class="c-diya">दिया: ${fmtAmount(t.diya)}</span> · <span class="c-liya">लिया: ${fmtAmount(t.liya)}</span> · <span class="c-baki">बाकी: ${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</span></div>
         <div class="date-card-entries">
           ${dayEntries.map(e => `<div class="date-entry-row" data-id="${esc(e.id)}" style="cursor:pointer">
             <span>${esc(e.name)}${e.star?' ⭐':''} <span class="type-tag">${TYPE_LABELS[e.type]}</span></span>
