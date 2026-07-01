@@ -104,26 +104,28 @@ body {
 /* TABS */
 .tabs {
   display: flex;
-  background: #fff;
+  gap: 6px;
   margin: 10px 12px 0;
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
 }
 .tab-btn {
   flex: 1;
-  padding: 11px 4px;
-  border: none;
-  background: none;
-  font-size: .82rem;
-  font-weight: 600;
-  color: var(--muted);
+  padding: 10px 3px;
+  border: 1.5px solid var(--green);
+  background: #fff;
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--green);
   cursor: pointer;
-  border-bottom: 3px solid transparent;
   transition: all .15s;
   font-family: inherit;
+  box-shadow: var(--shadow);
 }
-.tab-btn.active { color: var(--green); border-bottom-color: var(--green); background: var(--green-dim); }
+.tab-btn.active {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(30,90,70,.35);
+}
 
 /* MAIN CONTENT */
 main { padding: 10px 12px; }
