@@ -245,8 +245,12 @@ function renderPeople(list) {
 function renderDates(list) {
   const content = document.getElementById('content');
 
+  const dateLabel = selectedDateFilter ? fmtDate(selectedDateFilter) : 'तारीख़ चुनें';
   const picker = `<div class="date-picker-bar">
-    <input type="date" id="datePicker" value="${selectedDateFilter}" style="flex:1;padding:8px 10px;border:1.5px solid var(--green);border-radius:8px;font-size:1rem;background:var(--bg);color:var(--text)">
+    <div style="position:relative;flex:1">
+      <button id="datePickerBtn" class="date-picker-btn">${selectedDateFilter ? '📅 ' + dateLabel : '📅 तारीख़ चुनें'}</button>
+      <input type="date" id="datePicker" value="${selectedDateFilter}" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer">
+    </div>
     ${selectedDateFilter ? `<button id="datePickerClear" class="btn-secondary" style="padding:8px 14px;white-space:nowrap">✕ सभी</button>` : ''}
   </div>`;
 

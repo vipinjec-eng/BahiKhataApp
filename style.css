@@ -192,6 +192,7 @@ main { padding: 10px 12px; }
 
 /* DATE TAB */
 .date-picker-bar { display:flex; gap:8px; align-items:center; padding:10px 14px 6px; background:var(--bg); }
+.date-picker-btn { width:100%;padding:10px 14px;border:1.5px solid var(--green);border-radius:8px;background:var(--bg);color:var(--green);font-size:1rem;font-weight:600;text-align:left;cursor:pointer; }
 .date-card {
   background: #fff;
   border-radius: var(--radius);
