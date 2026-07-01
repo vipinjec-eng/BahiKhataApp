@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v38';
+const APP_VERSION = 'v39';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -315,7 +315,12 @@ function renderReminders() {
   const due = entries
     .filter(e => e.dueDate && e.dueDate <= in7)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-  if (!due.length) { banner.innerHTML = ''; return; }
+  if (!due.length) {
+    banner.innerHTML = `<div class="reminders-banner none">
+      <h3>🔔 रिमाइंडर — ० (कोई बकाया नहीं) ✓</h3>
+    </div>`;
+    return;
+  }
 
   const overCount = due.filter(e => e.dueDate < today).length;
   const rows = due.map(e => {
