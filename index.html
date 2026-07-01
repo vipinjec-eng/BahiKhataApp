@@ -46,7 +46,7 @@
   <button class="tab-btn active" data-tab="entries">एंट्री</button>
   <button class="tab-btn" data-tab="people">लोग</button>
   <button class="tab-btn" data-tab="dates">📅 तारीख़</button>
-  <button class="tab-btn" data-tab="earnings">💰 कमाई</button>
+  <button class="tab-btn" data-tab="earnings">📔 दैनिक लेखा</button>
 </nav>
 
 <div id="remindersBanner"></div>
@@ -222,6 +222,17 @@
       <button type="button" id="cloudConfirmBtn" class="btn-primary">ठीक है</button>
     </div>
     <button type="button" id="cloudDisableBtn" class="btn-danger" style="width:100%;margin-top:8px;display:none">🚫 अपने-आप बैकअप बंद करें</button>
+  </div>
+</div>
+
+<!-- Monthly summary modal -->
+<div id="monthlyModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>📊 मासिक हिसाब</h2>
+    <div id="monthlyList"></div>
+    <div class="modal-actions">
+      <button type="button" id="monthlyCloseBtn" class="btn-primary">बंद करें</button>
+    </div>
   </div>
 </div>
 

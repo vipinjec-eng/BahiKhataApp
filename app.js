@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v26';
+const APP_VERSION = 'v27';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -211,22 +211,13 @@ function monthLabel(ym) {
 function renderEarnings() {
   const content = document.getElementById('content');
   const today = todayISO();
-  const todayTotal = earnings.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
 
-  // group earnings + ledger by month (YYYY-MM)
-  const months = {};
-  earnings.forEach(e => {
-    const ym = e.date.slice(0, 7);
-    if (!months[ym]) months[ym] = { earn: 0, diya: 0, liya: 0 };
-    months[ym].earn += e.amount;
-  });
-  entries.forEach(e => {
-    const ym = e.date.slice(0, 7);
-    if (!months[ym]) months[ym] = { earn: 0, diya: 0, liya: 0 };
-    if (e.direction === 'diya') months[ym].diya += e.amount;
-    else months[ym].liya += e.amount;
-  });
-  const sortedMonths = Object.keys(months).sort((a, b) => b.localeCompare(a));
+  // TODAY only
+  const todayEarns = earnings.filter(e => e.date === today).sort((a, b) => b.id.localeCompare(a.id));
+  const todayTotal = todayEarns.reduce((s, e) => s + e.amount, 0);
+  const todayEntries = entries.filter(e => e.date === today);
+  const tDiya = todayEntries.filter(e => e.direction === 'diya').reduce((s, e) => s + e.amount, 0);
+  const tLiya = todayEntries.filter(e => e.direction === 'liya').reduce((s, e) => s + e.amount, 0);
 
   const quickAdd = `<div class="earn-quick">
     <div class="earn-today-label">आज की कमाई <span class="muted">(${fmtDate(today)})</span></div>
@@ -238,29 +229,27 @@ function renderEarnings() {
     </div>
   </div>`;
 
-  const monthCards = sortedMonths.length ? sortedMonths.map(ym => {
-    const m = months[ym];
-    const baki = m.diya - m.liya;
-    const monthEarns = earnings.filter(e => e.date.slice(0, 7) === ym).sort((a, b) => b.date.localeCompare(a.date));
-    const earnRows = monthEarns.map(e => `<div class="earn-row" data-earn-del="${esc(e.id)}">
-        <span class="earn-date">${fmtDate(e.date)}</span>
-        <span class="earn-note">${e.note ? esc(e.note) : 'कमाई'}</span>
-        <span class="earn-amt">${fmtAmount(e.amount)}</span>
-        <button class="del-btn" title="हटाएँ">🗑️</button>
-      </div>`).join('');
-    return `<div class="month-card">
-      <div class="month-title">${monthLabel(ym)}</div>
-      <div class="month-summary">
-        <div class="ms-item ms-earn"><span>💰 कमाई</span><b>${fmtAmount(m.earn)}</b></div>
-        <div class="ms-item ms-diya"><span>दिया</span><b>${fmtAmount(m.diya)}</b></div>
-        <div class="ms-item ms-liya"><span>लिया</span><b>${fmtAmount(m.liya)}</b></div>
-        <div class="ms-item ms-baki"><span>बाकी</span><b>${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</b></div>
-      </div>
-      ${earnRows ? `<details class="month-earn-details"><summary>कमाई की एंट्री (${toDevNum(monthEarns.length)})</summary>${earnRows}</details>` : ''}
-    </div>`;
-  }).join('') : `<div class="empty-state"><span class="emoji">💰</span>अभी कोई कमाई/हिसाब नहीं।</div>`;
+  const earnRows = todayEarns.length ? todayEarns.map(e => `<div class="earn-row" data-earn-del="${esc(e.id)}">
+      <span class="earn-date">${fmtDate(e.date)}</span>
+      <span class="earn-note">${e.note ? esc(e.note) : 'कमाई'}</span>
+      <span class="earn-amt">${fmtAmount(e.amount)}</span>
+      <button class="del-btn" title="हटाएँ">🗑️</button>
+    </div>`).join('') : `<div class="muted" style="text-align:center;padding:10px;font-size:.85rem">आज कोई कमाई नहीं जोड़ी</div>`;
 
-  content.innerHTML = quickAdd + monthCards;
+  const todayCard = `<div class="month-card">
+    <div class="month-title">📅 आज का हिसाब</div>
+    <div class="month-summary">
+      <div class="ms-item ms-earn"><span>💰 कमाई</span><b>${fmtAmount(todayTotal)}</b></div>
+      <div class="ms-item ms-diya"><span>दिया</span><b>${fmtAmount(tDiya)}</b></div>
+      <div class="ms-item ms-liya"><span>लिया</span><b>${fmtAmount(tLiya)}</b></div>
+      <div class="ms-item ms-baki"><span>बाकी</span><b>${((tDiya-tLiya)<0?'-':'')}${fmtAmount(Math.abs(tDiya-tLiya))}</b></div>
+    </div>
+    <div class="pd-list" style="margin-top:8px">${earnRows}</div>
+  </div>`;
+
+  const monthlyBtn = `<button id="openMonthlyBtn" class="footer-btn" style="margin:0 14px 12px;width:calc(100% - 28px)">📊 मासिक हिसाब देखें</button>`;
+
+  content.innerHTML = quickAdd + todayCard + monthlyBtn;
 
   const amtInp = document.getElementById('earnAmount');
   amtInp.addEventListener('input', e => {
@@ -282,7 +271,44 @@ function renderEarnings() {
       if (idx !== -1) { earnings.splice(idx, 1); saveEarnings(); showToast('कमाई हटाई ✓'); }
     });
   });
+  document.getElementById('openMonthlyBtn').addEventListener('click', openMonthlySummary);
 }
+
+function openMonthlySummary() {
+  // group earnings + ledger by month (YYYY-MM)
+  const months = {};
+  earnings.forEach(e => {
+    const ym = e.date.slice(0, 7);
+    if (!months[ym]) months[ym] = { earn: 0, diya: 0, liya: 0 };
+    months[ym].earn += e.amount;
+  });
+  entries.forEach(e => {
+    const ym = e.date.slice(0, 7);
+    if (!months[ym]) months[ym] = { earn: 0, diya: 0, liya: 0 };
+    if (e.direction === 'diya') months[ym].diya += e.amount;
+    else months[ym].liya += e.amount;
+  });
+  const sortedMonths = Object.keys(months).sort((a, b) => b.localeCompare(a));
+
+  const html = sortedMonths.length ? sortedMonths.map(ym => {
+    const m = months[ym];
+    const baki = m.diya - m.liya;
+    return `<div class="month-card" style="box-shadow:none;border:1px solid var(--border);margin:0 0 10px">
+      <div class="month-title">${monthLabel(ym)}</div>
+      <div class="month-summary">
+        <div class="ms-item ms-earn"><span>💰 कमाई</span><b>${fmtAmount(m.earn)}</b></div>
+        <div class="ms-item ms-diya"><span>दिया</span><b>${fmtAmount(m.diya)}</b></div>
+        <div class="ms-item ms-liya"><span>लिया</span><b>${fmtAmount(m.liya)}</b></div>
+        <div class="ms-item ms-baki"><span>बाकी</span><b>${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</b></div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state"><span class="emoji">📊</span>अभी कोई हिसाब नहीं।</div>`;
+
+  document.getElementById('monthlyList').innerHTML = html;
+  document.getElementById('monthlyModal').classList.remove('hidden');
+}
+document.getElementById('monthlyCloseBtn')?.addEventListener('click', () => document.getElementById('monthlyModal').classList.add('hidden'));
+document.getElementById('monthlyModal')?.addEventListener('click', e => { if (e.target === document.getElementById('monthlyModal')) document.getElementById('monthlyModal').classList.add('hidden'); });
 
 function renderReminders() {
   const banner = document.getElementById('remindersBanner');
