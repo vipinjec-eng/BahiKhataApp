@@ -614,9 +614,9 @@ async function callOcrSpace(base64) {
   const body = new URLSearchParams({
     apikey: 'helloworld',
     base64Image: 'data:image/jpeg;base64,' + base64,
-    language: 'hin',
+    language: 'eng',
     isTable: 'false',
-    OCREngine: '1',
+    OCREngine: '2',
     scale: 'true',
     isCreateSearchablePdf: 'false'
   });
