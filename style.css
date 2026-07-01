@@ -187,8 +187,19 @@ main { padding: 10px 12px; }
 .baki-neg { color: var(--red); }
 .baki-zero { color: var(--muted); }
 .person-sub { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.person-addr { font-size: .72rem; color: var(--muted); font-weight: 400; margin-left: 6px; }
 .person-footer { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .person-footer button { flex: 1; min-width: 120px; }
+.person-details { margin-top: 8px; }
+.person-details summary { cursor: pointer; font-size: .82rem; color: var(--green); font-weight: 600; padding: 4px 0; list-style: none; }
+.person-details summary::-webkit-details-marker { display: none; }
+.person-details[open] summary { margin-bottom: 4px; }
+.pd-list { border-top: 1px solid var(--border); }
+.pd-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 6px 0; font-size: .82rem; border-bottom: 1px dashed #f0f0f0; cursor: pointer; }
+.pd-row:last-child { border-bottom: none; }
+.pd-date { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.pd-type { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-amt { font-weight: 700; white-space: nowrap; }
 
 /* REMINDER CHIP + DELETE */
 .reminder-chip { display:inline-block; margin-top:5px; font-size:.72rem; font-weight:600; padding:2px 8px; border-radius:10px; }

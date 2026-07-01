@@ -31,7 +31,7 @@ function todayISO() {
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
-const TYPE_LABELS = { udhar:'उधार', bikri:'बिक्री', hisab:'हिसाब' };
+const TYPE_LABELS = { udhar:'उधार', bikri:'बिक्री', kharidi:'खरीदी', hisab:'हिसाब' };
 const WA_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" fill="#25d366" style="vertical-align:middle;margin-right:4px"><path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.12.55 4.18 1.6 6L0 24l6.17-1.58A12.04 12.04 0 0 0 12 24c6.63 0 12-5.37 12-12a11.94 11.94 0 0 0-3.48-8.52zM12 22c-1.85 0-3.64-.5-5.2-1.44l-.37-.22-3.66.94.97-3.56-.24-.38A9.97 9.97 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.47-7.54c-.3-.15-1.76-.87-2.03-.97s-.47-.15-.67.15c-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.78-1.67-2.08-.18-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52s-.67-1.6-.92-2.2c-.24-.58-.49-.5-.67-.5l-.57-.01c-.2 0-.52.07-.79.37s-1.04 1.02-1.04 2.48 1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.18-1.41-.07-.13-.27-.2-.57-.35z"/></svg>`;
 
 // ── BACKUP CODE HELPERS (localStorage + cookie fallback) ───────────────────
@@ -174,6 +174,9 @@ function render() {
   // update name datalist
   const names = [...new Set(entries.map(e => e.name))].sort();
   document.getElementById('nameList').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+  // update address datalist
+  const addrs = [...new Set(entries.map(e => e.address).filter(Boolean))].sort();
+  document.getElementById('addressList').innerHTML = addrs.map(a => `<option value="${esc(a)}">`).join('');
 
   renderReminders();
 
@@ -258,7 +261,7 @@ function entryCard(e) {
   return `<div class="entry-card ${cls}">
     <div class="entry-info">
       <div class="entry-name">${esc(e.name)}${e.star ? ' ⭐' : ''}</div>
-      <div class="entry-meta">${TYPE_LABELS[e.type] || e.type}${e.note ? ' · ' + esc(e.note) : ''}</div>
+      <div class="entry-meta">${TYPE_LABELS[e.type] || e.type}${e.address ? ' · 📍' + esc(e.address) : ''}${e.note ? ' · ' + esc(e.note) : ''}</div>
       ${reminderChip(e)}
     </div>
     <div class="entry-amount-col">
@@ -291,23 +294,36 @@ function renderPeople(list) {
   }
   const people = {};
   list.forEach(e => {
-    if (!people[e.name]) people[e.name] = { diya:0, liya:0, count:0 };
+    if (!people[e.name]) people[e.name] = { diya:0, liya:0, count:0, address:'', items:[] };
     if (e.direction === 'diya') people[e.name].diya += e.amount;
     else people[e.name].liya += e.amount;
     people[e.name].count++;
+    people[e.name].items.push(e);
+    if (e.address) people[e.name].address = e.address;
   });
   const sorted = Object.entries(people).sort(([a],[b]) => a.localeCompare(b));
   content.innerHTML = sorted.map(([name, p]) => {
     const baki = p.diya - p.liya;
     const bCls = baki > 0 ? 'baki-pos' : baki < 0 ? 'baki-neg' : 'baki-zero';
     const bLabel = baki >= 0 ? `आना है: ${fmtAmount(baki)}` : `देना है: ${fmtAmount(-baki)}`;
+    const detailRows = p.items
+      .slice().sort((a,b) => b.date.localeCompare(a.date))
+      .map(e => `<div class="pd-row" data-open-entry="${esc(e.id)}">
+        <span class="pd-date">${fmtDate(e.date)}</span>
+        <span class="pd-type">${TYPE_LABELS[e.type] || e.type}${e.note ? ' · ' + esc(e.note) : ''}</span>
+        <span class="pd-amt" style="color:${e.direction==='diya'?'var(--green)':'var(--red)'}">${e.direction==='diya'?'दिया':'लिया'} ${fmtAmount(e.amount)}</span>
+      </div>`).join('');
     return `<div class="person-card">
       <div class="person-header">
-        <div class="person-name">${esc(name)}</div>
+        <div class="person-name">${esc(name)}${p.address ? `<span class="person-addr">📍 ${esc(p.address)}</span>` : ''}</div>
         <div class="person-baki ${bCls}">${(baki < 0 ? '-' : '') + fmtAmount(Math.abs(baki))}</div>
         <button class="icon-btn" data-rename="${esc(name)}" title="नाम सुधारें" style="font-size:1.1rem">✏️</button>
       </div>
       <div class="person-sub">एंट्री: ${toDevNum(p.count)} · दिया ${fmtAmount(p.diya)} · लिया ${fmtAmount(p.liya)} · ${bLabel}</div>
+      <details class="person-details">
+        <summary>📋 सारी एंट्री देखें (${toDevNum(p.count)})</summary>
+        <div class="pd-list">${detailRows}</div>
+      </details>
       <div class="person-footer">
         <button class="footer-btn btn-wa" data-wa-person="${esc(name)}">${WA_SVG} WhatsApp</button>
       </div>
@@ -315,6 +331,10 @@ function renderPeople(list) {
   }).join('');
   content.querySelectorAll('[data-rename]').forEach(btn => btn.addEventListener('click', () => openRename(btn.dataset.rename)));
   content.querySelectorAll('[data-wa-person]').forEach(btn => btn.addEventListener('click', () => waSharePerson(btn.dataset.waPerson)));
+  content.querySelectorAll('[data-open-entry]').forEach(row => row.addEventListener('click', () => {
+    const e = entries.find(x => x.id === row.dataset.openEntry);
+    if (e) openForm(e);
+  }));
 
   // WhatsApp footer button for all
   document.getElementById('whatsAppAllBtn').onclick = waShareAll;
@@ -388,6 +408,7 @@ function openForm(entry = null) {
   document.getElementById('fDate').value = fDateVal;
   document.getElementById('fDateBtn').textContent = '📅 ' + fmtDate(fDateVal);
   document.getElementById('fNote').value = entry ? (entry.note || '') : '';
+  document.getElementById('fAddress').value = entry ? (entry.address || '') : '';
   document.getElementById('fStar').checked = entry ? !!entry.star : false;
 
   // due date / reminder
@@ -461,6 +482,7 @@ document.getElementById('saveEntryBtn').addEventListener('click', async () => {
   const type = document.getElementById('fType').value;
   const date = document.getElementById('fDate').value || todayISO();
   const note = document.getElementById('fNote').value.trim();
+  const address = document.getElementById('fAddress').value.trim();
   const star = document.getElementById('fStar').checked;
   const dueDate = document.getElementById('fDue').value || '';
 
@@ -468,14 +490,14 @@ document.getElementById('saveEntryBtn').addEventListener('click', async () => {
     const idx = entries.findIndex(e => e.id === editingId);
     if (idx !== -1) {
       const hadPhoto = entries[idx].hasPhoto;
-      entries[idx] = { ...entries[idx], name, amount, direction, type, date, note, star, dueDate, hasPhoto: !!pendingPhotoBase64 || (hadPhoto && pendingPhotoBase64 !== null) };
+      entries[idx] = { ...entries[idx], name, amount, direction, type, date, note, address, star, dueDate, hasPhoto: !!pendingPhotoBase64 || (hadPhoto && pendingPhotoBase64 !== null) };
       if (pendingPhotoBase64) await savePhoto(editingId, pendingPhotoBase64);
       else if (!pendingPhotoBase64 && hadPhoto) await deletePhoto(editingId);
     }
   } else {
     const id = uid();
     const hasPhoto = !!pendingPhotoBase64;
-    entries.push({ id, name, amount, direction, type, date, note, star, dueDate, hasPhoto });
+    entries.push({ id, name, amount, direction, type, date, note, address, star, dueDate, hasPhoto });
     if (pendingPhotoBase64) await savePhoto(id, pendingPhotoBase64);
   }
   saveEntries();
