@@ -1,4 +1,4 @@
-const CACHE = 'bahikhata-v42';
+const CACHE = 'bahikhata-v43';
 const SHELL = [
   'index.html',
   'style.css',
@@ -35,8 +35,10 @@ self.addEventListener('fetch', e => {
   const isCode = /\.(html|js|css|json)$/.test(url.pathname) || url.pathname.endsWith('/');
 
   if (isCode) {
+    // cache:'reload' bypasses the browser HTTP cache (GitHub Pages max-age=600)
+    // so a fresh version is fetched immediately, not up to 10 min later.
     e.respondWith(
-      fetch(e.request).then(resp => {
+      fetch(e.request, { cache: 'reload' }).then(resp => {
         if (resp && resp.status === 200) {
           const clone = resp.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
