@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v33';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -1056,14 +1056,25 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
   const photos = await getAllPhotos();
   const photoMap = {};
   photos.forEach(p => { photoMap[p.id] = p.data; });
-  const blob = new Blob([JSON.stringify({ entries, earnings, photos: photoMap })], { type: 'application/json' });
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+  const meta = {
+    app: 'प्रभुति ट्रेडर्स',
+    version: APP_VERSION,
+    savedAt: now.toISOString(),
+    savedAtLabel: `${fmtDate(todayISO())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+    entryCount: entries.length,
+    earningCount: earnings.length
+  };
+  const blob = new Blob([JSON.stringify({ meta, entries, earnings, photos: photoMap }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `bahikhata-backup-${todayISO()}.json`;
+  a.download = `प्रभुति-बैकअप_${stamp}_${entries.length}entry.json`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('बैकअप फ़ाइल सेव हुई ✓');
+  showToast(`बैकअप सेव हुई ✓ (${toDevNum(entries.length)} entries)`);
 });
 
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
@@ -1087,7 +1098,8 @@ document.getElementById('importFile').addEventListener('change', e => {
         }
       }
       render();
-      showToast(`बैकअप से ${toDevNum(entries.length)} entries वापस आईं ✓`);
+      const when = data.meta && data.meta.savedAtLabel ? ` (${data.meta.savedAtLabel} वाला)` : '';
+      showToast(`बैकअप से ${toDevNum(entries.length)} entries वापस आईं ✓${when}`);
     } catch (err) { showToast('बैकअप फ़ाइल गलत है: ' + err.message); }
   };
   reader.readAsText(file);

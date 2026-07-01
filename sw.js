@@ -1,4 +1,4 @@
-const CACHE = 'bahikhata-v32';
+const CACHE = 'bahikhata-v33';
 const SHELL = [
   'index.html',
   'style.css',
