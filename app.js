@@ -304,7 +304,7 @@ function openForm(entry = null) {
 
   document.getElementById('formTitle').textContent = entry ? 'एंट्री सुधारें' : 'नई एंट्री';
   document.getElementById('fName').value = entry ? entry.name : '';
-  document.getElementById('fAmount').value = entry ? entry.amount : '';
+  document.getElementById('fAmount').value = entry ? toDevNum(entry.amount) : '';
   document.getElementById('fType').value = entry ? entry.type : 'udhar';
   const fDateVal = entry ? entry.date : todayISO();
   document.getElementById('fDate').value = fDateVal;
@@ -371,7 +371,7 @@ document.getElementById('photoRemoveBtn').addEventListener('click', () => {
 
 document.getElementById('saveEntryBtn').addEventListener('click', async () => {
   const name = document.getElementById('fName').value.trim();
-  const amount = parseFloat(document.getElementById('fAmount').value);
+  const amount = parseFloat(fromDevNum(document.getElementById('fAmount').value));
   if (!name) { showToast('नाम ज़रूरी है'); return; }
   if (!amount || amount <= 0) { showToast('सही रकम लिखें'); return; }
   const direction = document.querySelector('.pill.active').dataset.dir;
@@ -939,6 +939,13 @@ function showToast(msg) {
 
 document.getElementById('fDate').addEventListener('change', e => {
   document.getElementById('fDateBtn').textContent = '📅 ' + (e.target.value ? fmtDate(e.target.value) : 'तारीख़ चुनें');
+});
+
+document.getElementById('fAmount').addEventListener('input', e => {
+  const pos = e.target.selectionStart;
+  const converted = toDevNum(e.target.value.replace(/[^\d०-९]/g, ''));
+  e.target.value = converted;
+  e.target.setSelectionRange(pos, pos);
 });
 
 // ── SERVICE WORKER REGISTRATION ────────────────────────────────────────────
