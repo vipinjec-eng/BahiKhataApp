@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v37';
+const APP_VERSION = 'v38';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -154,6 +154,7 @@ function compressImage(file, maxDim = 1200, quality = 0.82) {
 // ── SAVE / RENDER ──────────────────────────────────────────────────────────
 function saveEntries() {
   localStorage.setItem('bahi_entries', JSON.stringify(entries));
+  localStorage.setItem('bahi_modified', Date.now());
   render();
   schedulePushBackup();
 }
@@ -192,6 +193,7 @@ function render() {
 
 function saveEarnings() {
   localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
+  localStorage.setItem('bahi_modified', Date.now());
   render();
   schedulePushBackup();
 }
@@ -1267,29 +1269,39 @@ document.getElementById('fAmount')?.addEventListener('input', e => {
   e.target.setSelectionRange(pos, pos);
 });
 
-// ── AUTO-RESTORE ON STARTUP ────────────────────────────────────────────────
+// ── SERVER-FIRST SYNC ON STARTUP ───────────────────────────────────────────
+// Server is the source of truth. On load, pull from server; use server data if
+// it's newer than the local copy (or local is empty). If local is newer
+// (offline edits), push local up. This makes cache-clear harmless + multi-device.
 (async () => {
   const code = getBackupCode();
-  if (code && entries.length === 0) {
-    try {
-      const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
-      const res = await fetch(`${serverUrl}/backup/${encodeURIComponent(code)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.entries) && data.entries.length > 0) {
-          entries = data.entries;
-          localStorage.setItem('bahi_entries', JSON.stringify(entries));
-          if (Array.isArray(data.earnings)) {
-            earnings = data.earnings;
-            localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
-          }
-          cloudEnabled = true;
-          render();
-          showToast(`☁️ ${toDevNum(entries.length)} entries cloud से वापस आईं ✓`);
-        }
+  if (!code) return;
+  try {
+    const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
+    const res = await fetch(`${serverUrl}/backup/${encodeURIComponent(code)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data.entries)) return;
+    const serverTime = data.savedAt ? new Date(data.savedAt).getTime() : 0;
+    const localTime = parseInt(localStorage.getItem('bahi_modified') || '0', 10);
+
+    if (entries.length === 0 || serverTime > localTime + 3000) {
+      // server is meaningfully newer (or nothing local) → use server as truth
+      entries = data.entries;
+      localStorage.setItem('bahi_entries', JSON.stringify(entries));
+      if (Array.isArray(data.earnings)) {
+        earnings = data.earnings;
+        localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
       }
-    } catch {}
-  }
+      localStorage.setItem('bahi_modified', String(serverTime || Date.now()));
+      cloudEnabled = true;
+      render();
+      showToast(`☁️ सर्वर से ${toDevNum(entries.length)} entries आईं ✓`);
+    } else if (localTime > serverTime + 3000) {
+      // local has newer (offline) changes → push up
+      pushCloudBackupNow();
+    }
+  } catch {}
 })();
 
 // ── REMINDER NOTIFICATIONS ─────────────────────────────────────────────────
