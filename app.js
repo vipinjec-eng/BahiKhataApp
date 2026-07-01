@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v31';
+const APP_VERSION = 'v32';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -247,9 +247,44 @@ function renderEarnings() {
     <div class="pd-list" style="margin-top:8px">${earnRows}</div>
   </div>`;
 
+  // ── reminders: overdue + today + next 7 days ──
+  const in7 = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+  const dueList = entries
+    .filter(e => e.dueDate && e.dueDate <= in7)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  let remindCard = '';
+  if (dueList.length) {
+    const rows = dueList.map(e => {
+      let cls = 'r-upcoming', label = fmtDate(e.dueDate);
+      if (e.dueDate < today) { cls = 'r-over'; label = 'बकाया · ' + fmtDate(e.dueDate); }
+      else if (e.dueDate === today) { cls = 'r-today'; label = 'आज'; }
+      return `<div class="remind-item">
+        <div class="remind-info">
+          <span class="remind-badge ${cls}">${label}</span>
+          <span class="remind-name">${esc(e.name)} · ${fmtAmount(e.amount)} <span class="muted">(${e.direction==='diya'?'देना':'लेना'})</span></span>
+        </div>
+        <div class="remind-btns">
+          <button data-remind-wa="${esc(e.id)}" title="WhatsApp">🟢</button>
+          <button data-remind-open="${esc(e.id)}" title="खोलें">✏️</button>
+        </div>
+      </div>`;
+    }).join('');
+    remindCard = `<div class="month-card">
+      <div class="month-title">🔔 रिमाइंडर (${toDevNum(dueList.length)})</div>
+      <div class="remind-list">${rows}</div>
+    </div>`;
+  } else {
+    remindCard = `<div class="month-card"><div class="month-title">🔔 रिमाइंडर</div><div class="muted" style="text-align:center;padding:10px;font-size:.85rem">कोई due तारीख़ वाली एंट्री नहीं।<br>एंट्री में "⏰ याद दिलाएँ" तारीख़ डालें।</div></div>`;
+  }
+
   const monthlyBtn = `<button id="openMonthlyBtn" class="footer-btn" style="margin:0 14px 12px;width:calc(100% - 28px)">📊 मासिक हिसाब देखें</button>`;
 
-  content.innerHTML = quickAdd + todayCard + monthlyBtn;
+  content.innerHTML = quickAdd + remindCard + todayCard + monthlyBtn;
+
+  content.querySelectorAll('[data-remind-open]').forEach(btn =>
+    btn.addEventListener('click', () => openForm(entries.find(e => e.id === btn.dataset.remindOpen))));
+  content.querySelectorAll('[data-remind-wa]').forEach(btn =>
+    btn.addEventListener('click', () => waRemind(entries.find(e => e.id === btn.dataset.remindWa))));
 
   const amtInp = document.getElementById('earnAmount');
   amtInp.addEventListener('input', e => {

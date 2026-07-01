@@ -224,6 +224,19 @@ main { padding: 10px 12px; }
 .earn-amt { font-weight:700; color:var(--gold); white-space:nowrap; }
 .earn-row .del-btn { background:none; border:none; cursor:pointer; }
 
+/* REMINDER LIST (daily tab) */
+.remind-list { border-top:1px solid var(--border); margin-top:6px; }
+.remind-item { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed #f0f0f0; }
+.remind-item:last-child { border-bottom:none; }
+.remind-info { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.remind-name { font-size:.85rem; overflow:hidden; text-overflow:ellipsis; }
+.remind-badge { font-size:.7rem; font-weight:700; padding:1px 7px; border-radius:9px; align-self:flex-start; }
+.remind-badge.r-over { background:#fdd9d4; color:#b02a12; }
+.remind-badge.r-today { background:#ffe3b3; color:#a05a00; }
+.remind-badge.r-upcoming { background:#e6f0ff; color:#1e5a9e; }
+.remind-btns { display:flex; gap:4px; flex-shrink:0; }
+.remind-btns button { background:none; border:none; cursor:pointer; font-size:1rem; padding:2px; }
+
 /* CLOUD MSG */
 .cloud-msg { font-size:.82rem; margin:6px 0; min-height:1.1em; text-align:center; }
 .cloud-msg.ok { color:#1e7d4a; font-weight:600; }
