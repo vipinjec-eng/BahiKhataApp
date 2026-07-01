@@ -1,5 +1,8 @@
 /* ── हिसाब बहीखाता ── */
 
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
+
 // ── DEVANAGARI HELPERS ─────────────────────────────────────────────────────
 const DEVA_DIGITS = ['०','१','२','३','४','५','६','७','८','९'];
 function toDevNum(str) {
@@ -557,7 +560,7 @@ document.getElementById('scanRunBtn').addEventListener('click', async () => {
 
 async function callVision(base64) {
   const key = localStorage.getItem('bahi_gemini_key');
-  const serverUrl = localStorage.getItem('bahi_server_url');
+  const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
   const serverPass = localStorage.getItem('bahi_server_pass') || '';
 
   // ── Path 1: Cloudflare Worker proxy ──────────────────────────────────────
@@ -838,8 +841,6 @@ document.getElementById('cloudConfirmBtn').addEventListener('click', async () =>
   if (mode === 'restore') {
     await cloudRestore(code);
   } else {
-    const serverUrl = localStorage.getItem('bahi_server_url');
-    if (!serverUrl) { showToast('पहले ⚙️ सेटिंग में सर्वर URL डालें'); return; }
     localStorage.setItem('bahi_backup_code', code);
     updateCloudStatus();
     document.getElementById('cloudModal').classList.add('hidden');
@@ -850,9 +851,9 @@ document.getElementById('cloudConfirmBtn').addEventListener('click', async () =>
 
 async function pushCloudBackupNow() {
   const code = localStorage.getItem('bahi_backup_code');
-  const serverUrl = localStorage.getItem('bahi_server_url');
+  const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
   const serverPass = localStorage.getItem('bahi_server_pass') || '';
-  if (!code || !serverUrl) return;
+  if (!code) return;
   try {
     const res = await fetch(serverUrl.replace(/\/$/, '') + '/backup/' + encodeURIComponent(code), {
       method: 'POST',
@@ -868,9 +869,8 @@ async function pushCloudBackupNow() {
 }
 
 async function cloudRestore(code) {
-  const serverUrl = localStorage.getItem('bahi_server_url');
+  const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
   const serverPass = localStorage.getItem('bahi_server_pass') || '';
-  if (!serverUrl) { showToast('पहले ⚙️ सेटिंग में सर्वर URL डालें'); return; }
   showToast('डेटा वापस ला रहे हैं...');
   try {
     const res = await fetch(serverUrl.replace(/\/$/, '') + '/backup/' + encodeURIComponent(code) + '?password=' + encodeURIComponent(serverPass));
