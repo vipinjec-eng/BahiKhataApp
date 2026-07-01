@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -53,7 +53,7 @@ function getBackupCode() {
   return code || '';
 }
 function saveBackupCode(code) {
-  saveBackupCode(code);
+  localStorage.setItem('bahi_backup_code', code);
   document.cookie = `bahi_code=${encodeURIComponent(code)};max-age=31536000;path=/;SameSite=Strict`;
 }
 function clearBackupCode() {
