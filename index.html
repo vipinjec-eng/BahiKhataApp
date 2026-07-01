@@ -48,6 +48,8 @@
   <button class="tab-btn" data-tab="dates">📅 तारीख़ वार</button>
 </nav>
 
+<div id="remindersBanner"></div>
+
 <main id="content"></main>
 
 <button id="fabAdd" class="fab" title="नई एंट्री">＋</button>
@@ -95,6 +97,13 @@
     <label>नोट / remark
       <input type="text" id="fNote" placeholder="वैकल्पिक">
     </label>
+    <label>⏰ याद दिलाएँ (due date)
+      <div style="position:relative">
+        <button type="button" id="fDueBtn" class="date-picker-btn" style="width:100%;text-align:left"></button>
+        <input type="date" id="fDue" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer">
+      </div>
+    </label>
+    <button type="button" id="fDueClearBtn" class="btn-secondary" style="margin-top:-4px;font-size:.8rem;padding:5px 10px;align-self:flex-start">✕ reminder हटाएँ</button>
     <label class="star-check">
       <input type="checkbox" id="fStar"> ⭐ ज़रूरी एंट्री (बड़ा amount)
     </label>

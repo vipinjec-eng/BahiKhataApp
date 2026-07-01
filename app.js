@@ -175,9 +175,45 @@ function render() {
   const names = [...new Set(entries.map(e => e.name))].sort();
   document.getElementById('nameList').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
 
+  renderReminders();
+
   if (activeTab === 'entries') renderEntries(list);
   else if (activeTab === 'people') renderPeople(list);
   else renderDates(list);
+}
+
+function renderReminders() {
+  const banner = document.getElementById('remindersBanner');
+  const today = todayISO();
+  // entries with a due date today or overdue, sorted by due date
+  const due = entries
+    .filter(e => e.dueDate && e.dueDate <= today)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  if (!due.length) { banner.innerHTML = ''; return; }
+  banner.innerHTML = `<div class="reminders-banner">
+    <h3>⏰ याद दिलाने वाली ${toDevNum(due.length)} एंट्री</h3>
+    ${due.map(e => {
+      const over = e.dueDate < today;
+      return `<div class="reminder-line">
+        <span><span class="${over ? 'r-over' : 'r-today'}">${over ? 'बकाया' : 'आज'}</span> — ${esc(e.name)} · ${fmtAmount(e.amount)}</span>
+        <span>
+          <button data-remind-wa="${esc(e.id)}" title="WhatsApp याद दिलाएँ">🟢</button>
+          <button data-remind-open="${esc(e.id)}" title="खोलें">✏️</button>
+        </span>
+      </div>`;
+    }).join('')}
+  </div>`;
+  banner.querySelectorAll('[data-remind-open]').forEach(btn =>
+    btn.addEventListener('click', () => openForm(entries.find(e => e.id === btn.dataset.remindOpen))));
+  banner.querySelectorAll('[data-remind-wa]').forEach(btn =>
+    btn.addEventListener('click', () => waRemind(entries.find(e => e.id === btn.dataset.remindWa))));
+}
+
+function waRemind(e) {
+  if (!e) return;
+  const dir = e.direction === 'diya' ? 'आपको मुझसे' : 'मुझे आपसे';
+  const msg = `नमस्ते ${e.name} जी,\nयाद दिलाना था — ${dir} ${fmtAmount(e.amount)} का हिसाब बाकी है (तारीख़: ${fmtDate(e.dueDate)}).\nकृपया देख लें। धन्यवाद 🙏`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -203,6 +239,18 @@ function renderEntries(list) {
   content.querySelectorAll('[data-photo-view]').forEach(btn => {
     btn.addEventListener('click', () => viewPhoto(btn.dataset.photoView));
   });
+  content.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => deleteEntryById(btn.dataset.del));
+  });
+}
+
+function reminderChip(e) {
+  if (!e.dueDate) return '';
+  const today = todayISO();
+  let cls = 'due-upcoming', label = 'याद';
+  if (e.dueDate < today) { cls = 'due-over'; label = 'बकाया'; }
+  else if (e.dueDate === today) { cls = 'due-today'; label = 'आज'; }
+  return `<div class="reminder-chip ${cls}">⏰ ${label}: ${fmtDate(e.dueDate)}</div>`;
 }
 
 function entryCard(e) {
@@ -211,6 +259,7 @@ function entryCard(e) {
     <div class="entry-info">
       <div class="entry-name">${esc(e.name)}${e.star ? ' ⭐' : ''}</div>
       <div class="entry-meta">${TYPE_LABELS[e.type] || e.type}${e.note ? ' · ' + esc(e.note) : ''}</div>
+      ${reminderChip(e)}
     </div>
     <div class="entry-amount-col">
       <div class="entry-amount">${fmtAmount(e.amount)}</div>
@@ -218,9 +267,20 @@ function entryCard(e) {
       <div class="entry-actions">
         ${e.hasPhoto ? `<button data-photo-view="${esc(e.id)}" title="फोटो देखें">📷</button>` : ''}
         <button data-edit="${esc(e.id)}" title="संपादित करें">✏️</button>
+        <button data-del="${esc(e.id)}" title="हटाएँ" class="del-btn">🗑️</button>
       </div>
     </div>
   </div>`;
+}
+
+async function deleteEntryById(id) {
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  if (!confirm(`"${entries[idx].name}" की यह एंट्री हटा दें?`)) return;
+  if (entries[idx].hasPhoto) await deletePhoto(id);
+  entries.splice(idx, 1);
+  saveEntries();
+  showToast('एंट्री हटा दी ✓');
 }
 
 function renderPeople(list) {
@@ -330,6 +390,11 @@ function openForm(entry = null) {
   document.getElementById('fNote').value = entry ? (entry.note || '') : '';
   document.getElementById('fStar').checked = entry ? !!entry.star : false;
 
+  // due date / reminder
+  const dueVal = entry ? (entry.dueDate || '') : '';
+  document.getElementById('fDue').value = dueVal;
+  document.getElementById('fDueBtn').textContent = dueVal ? '⏰ ' + fmtDate(dueVal) : '⏰ तारीख़ चुनें (वैकल्पिक)';
+
   // direction pills
   const dirVal = entry ? entry.direction : 'diya';
   document.querySelectorAll('.pill').forEach(p => {
@@ -397,19 +462,20 @@ document.getElementById('saveEntryBtn').addEventListener('click', async () => {
   const date = document.getElementById('fDate').value || todayISO();
   const note = document.getElementById('fNote').value.trim();
   const star = document.getElementById('fStar').checked;
+  const dueDate = document.getElementById('fDue').value || '';
 
   if (editingId) {
     const idx = entries.findIndex(e => e.id === editingId);
     if (idx !== -1) {
       const hadPhoto = entries[idx].hasPhoto;
-      entries[idx] = { ...entries[idx], name, amount, direction, type, date, note, star, hasPhoto: !!pendingPhotoBase64 || (hadPhoto && pendingPhotoBase64 !== null) };
+      entries[idx] = { ...entries[idx], name, amount, direction, type, date, note, star, dueDate, hasPhoto: !!pendingPhotoBase64 || (hadPhoto && pendingPhotoBase64 !== null) };
       if (pendingPhotoBase64) await savePhoto(editingId, pendingPhotoBase64);
       else if (!pendingPhotoBase64 && hadPhoto) await deletePhoto(editingId);
     }
   } else {
     const id = uid();
     const hasPhoto = !!pendingPhotoBase64;
-    entries.push({ id, name, amount, direction, type, date, note, star, hasPhoto });
+    entries.push({ id, name, amount, direction, type, date, note, star, dueDate, hasPhoto });
     if (pendingPhotoBase64) await savePhoto(id, pendingPhotoBase64);
   }
   saveEntries();
@@ -968,6 +1034,14 @@ document.getElementById('fDate').addEventListener('change', e => {
   document.getElementById('fDateBtn').textContent = '📅 ' + (e.target.value ? fmtDate(e.target.value) : 'तारीख़ चुनें');
 });
 
+document.getElementById('fDue').addEventListener('change', e => {
+  document.getElementById('fDueBtn').textContent = e.target.value ? '⏰ ' + fmtDate(e.target.value) : '⏰ तारीख़ चुनें (वैकल्पिक)';
+});
+document.getElementById('fDueClearBtn').addEventListener('click', () => {
+  document.getElementById('fDue').value = '';
+  document.getElementById('fDueBtn').textContent = '⏰ तारीख़ चुनें (वैकल्पिक)';
+});
+
 document.getElementById('fAmount').addEventListener('input', e => {
   const pos = e.target.selectionStart;
   const converted = toDevNum(e.target.value.replace(/[^\d०-९]/g, ''));
@@ -995,6 +1069,34 @@ document.getElementById('fAmount').addEventListener('input', e => {
     } catch {}
   }
 })();
+
+// ── REMINDER NOTIFICATIONS ─────────────────────────────────────────────────
+function notifyDueReminders() {
+  if (!('Notification' in window)) return;
+  const today = todayISO();
+  const due = entries.filter(e => e.dueDate && e.dueDate <= today);
+  if (!due.length) return;
+
+  const show = () => {
+    // only notify once per day
+    if (localStorage.getItem('bahi_last_notify') === today) return;
+    localStorage.setItem('bahi_last_notify', today);
+    const over = due.filter(e => e.dueDate < today).length;
+    const body = due.slice(0, 4).map(e => `${e.name} — ${fmtAmount(e.amount)}`).join('\n');
+    new Notification('⏰ प्रभुति ट्रेडर्स — याद दिलाना', {
+      body: `${toDevNum(due.length)} एंट्री बाकी${over ? ` (${toDevNum(over)} overdue)` : ''}\n${body}`,
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      tag: 'bahi-reminders'
+    });
+  };
+
+  if (Notification.permission === 'granted') show();
+  else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => { if (p === 'granted') show(); });
+  }
+}
+setTimeout(notifyDueReminders, 2500);
 
 // ── SERVICE WORKER REGISTRATION ────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
