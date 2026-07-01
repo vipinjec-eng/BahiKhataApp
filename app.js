@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v44';
+const APP_VERSION = 'v45';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -749,6 +749,19 @@ function waShareAll() {
 
 document.getElementById('whatsAppAllBtn').addEventListener('click', waShareAll);
 
+// ── BACKUP LOCK (prevent accidental taps) ──────────────────────────────────
+function setBackupLocked(locked) {
+  const area = document.getElementById('backupArea');
+  const label = document.getElementById('backupLockLabel');
+  const toggle = document.getElementById('backupLockToggle');
+  if (!area) return;
+  area.classList.toggle('locked', locked);
+  if (label) label.textContent = locked ? '🔒 बैकअप बटन लॉक हैं (छेड़छाड़ से बचाव)' : '🔓 बैकअप बटन खुले हैं — काम के बाद फिर लॉक करें';
+  if (toggle) toggle.checked = !locked;
+}
+function relockBackup() { setBackupLocked(true); }
+document.getElementById('backupLockToggle')?.addEventListener('change', e => setBackupLocked(!e.target.checked));
+
 
 // ── SCAN (OCR) FLOW ────────────────────────────────────────────────────────
 const GEMINI_PROMPT = `यह एक हिसाब रजिस्टर का फोटो है। इसमें से हर entry को पढ़कर नीचे दिए format में JSON array दो।
@@ -1031,6 +1044,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
   a.click();
   URL.revokeObjectURL(url);
   showToast(`बैकअप सेव हुई ✓ (${toDevNum(entries.length)} entries)`);
+  relockBackup();
 });
 
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
@@ -1056,6 +1070,7 @@ document.getElementById('importFile').addEventListener('change', e => {
       render();
       const when = data.meta && data.meta.savedAtLabel ? ` (${data.meta.savedAtLabel} वाला)` : '';
       showToast(`बैकअप से ${toDevNum(entries.length)} entries वापस आईं ✓${when}`);
+      relockBackup();
     } catch (err) { showToast('बैकअप फ़ाइल गलत है: ' + err.message); }
   };
   reader.readAsText(file);
@@ -1128,6 +1143,7 @@ document.getElementById('cloudDisableBtn')?.addEventListener('click', () => {
   updateCloudStatus();
   document.getElementById('cloudModal').classList.add('hidden');
   showToast('अपने-आप बैकअप बंद हुआ');
+  relockBackup();
 });
 
 document.getElementById('cloudConfirmBtn')?.addEventListener('click', async () => {
@@ -1146,6 +1162,7 @@ document.getElementById('cloudConfirmBtn')?.addEventListener('click', async () =
       if (r.ok) {
         cloudMsg(`✓ बैकअप हो गया (${toDevNum(entries.length)} entries)`, 'ok');
         showToast(`✓ बैकअप चालू (${toDevNum(entries.length)} entries)`);
+        relockBackup();
         setTimeout(() => document.getElementById('cloudModal').classList.add('hidden'), 1200);
       } else {
         cloudMsg('✗ बैकअप नहीं हुआ: ' + r.error, 'err');
@@ -1209,6 +1226,7 @@ async function cloudRestore(code) {
     updateCloudStatus();
     cloudMsg(`✓ ${toDevNum(entries.length)} entries वापस आईं`, 'ok');
     showToast('डेटा वापस आ गया ✓');
+    relockBackup();
     setTimeout(() => document.getElementById('cloudModal').classList.add('hidden'), 1000);
   } catch (err) { cloudMsg('✗ वापसी नहीं हुई: ' + err.message, 'err'); }
 }

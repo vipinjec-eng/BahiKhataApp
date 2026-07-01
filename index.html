@@ -40,15 +40,21 @@
 <button id="fabAdd" class="fab" title="नई एंट्री">＋</button>
 
 <footer class="footer">
-  <div class="backup-group-label">📱 फ़ोन में बैकअप (फ़ाइल)</div>
-  <button id="exportBtn" class="footer-btn">💾 फ़ोन पे सेव करें</button>
-  <button id="importBtn" class="footer-btn">♻️ फ़ोन से वापस लाएँ</button>
-  <input type="file" id="importFile" accept="application/json" hidden>
-  <div class="cloud-box">
-    <div class="backup-group-label">☁️ सर्वर में बैकअप (कोड से — नए फ़ोन में भी)</div>
-    <button id="cloudToggleBtn" class="footer-btn">☁️ सर्वर पे बैकअप चालू करें</button>
-    <button id="cloudRestoreBtn" class="footer-btn">🔑 सर्वर से वापस लाएँ (कोड से)</button>
-    <div id="cloudStatus" class="cloud-status"></div>
+  <div class="backup-lock">
+    <span id="backupLockLabel">🔒 बैकअप बटन लॉक हैं (छेड़छाड़ से बचाव)</span>
+    <label class="switch"><input type="checkbox" id="backupLockToggle"><span class="slider"></span></label>
+  </div>
+  <div id="backupArea" class="locked">
+    <div class="backup-group-label">📱 फ़ोन में बैकअप (फ़ाइल)</div>
+    <button id="exportBtn" class="footer-btn">💾 फ़ोन पे सेव करें</button>
+    <button id="importBtn" class="footer-btn">♻️ फ़ोन से वापस लाएँ</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+    <div class="cloud-box">
+      <div class="backup-group-label">☁️ सर्वर में बैकअप (कोड से — नए फ़ोन में भी)</div>
+      <button id="cloudToggleBtn" class="footer-btn">☁️ सर्वर पे बैकअप चालू करें</button>
+      <button id="cloudRestoreBtn" class="footer-btn">🔑 सर्वर से वापस लाएँ (कोड से)</button>
+      <div id="cloudStatus" class="cloud-status"></div>
+    </div>
   </div>
   <button id="whatsAppAllBtn" class="footer-btn btn-wa">🟢 पूरा हिसाब WhatsApp पर भेजें</button>
   <div id="versionTag" style="text-align:center;font-size:.7rem;color:var(--muted);padding:6px"></div>
