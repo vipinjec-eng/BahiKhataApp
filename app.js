@@ -760,13 +760,22 @@ function showScanReview(rows) {
           <option value="diya" ${r.direction !== 'liya' ? 'selected' : ''}>दिया</option>
           <option value="liya" ${r.direction === 'liya' ? 'selected' : ''}>लिया</option>
         </select>
-        <input name="date" type="date" value="${r.date || today}">
+        <div style="position:relative">
+          <button type="button" class="date-picker-btn scan-date-btn" style="width:100%;text-align:left;padding:8px 10px">📅 ${fmtDate(r.date || today)}</button>
+          <input name="date" type="date" value="${r.date || today}" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer">
+        </div>
         <input name="note" value="${esc(r.note || '')}" placeholder="नोट">
       </div>
       <label style="font-size:.8rem;display:flex;align-items:center;gap:6px;margin-top:4px">
         <input type="checkbox" name="star" ${r.star ? 'checked' : ''}> ⭐ ज़रूरी
       </label>
     </div>`).join('');
+  document.querySelectorAll('.scan-review-row [name=date]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const btn = e.target.parentElement.querySelector('.scan-date-btn');
+      if (btn) btn.textContent = '📅 ' + (e.target.value ? fmtDate(e.target.value) : 'तारीख़');
+    });
+  });
   document.getElementById('scanReviewWrap').classList.remove('hidden');
 }
 

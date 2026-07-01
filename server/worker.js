@@ -20,13 +20,13 @@ const CORS = {
 
 const PROMPT = `यह एक हिसाब रजिस्टर का फोटो है। इसमें से हर entry को पढ़कर नीचे दिए format में JSON array दो।
 हर item में ये fields रखो:
-- name: व्यक्ति का नाम (string)
-- amount: रकम (number, सिर्फ़ अंक)
+- name: व्यक्ति का नाम — हमेशा देवनागरी (हिंदी) में लिखो, चाहे रजिस्टर में कैसे भी लिखा हो। अंग्रेज़ी अक्षरों में मत लिखो।
+- amount: रकम (number, सिर्फ़ अंक — अंग्रेज़ी digits 0-9 में)
 - date: तारीख़ YYYY-MM-DD format में (अगर सिर्फ़ DD/MM हो तो साल 2026 मान लो)
 - direction: "diya" या "liya"
 - star: true (50000 से ज़्यादा या हरे highlight) या false
 - note: अतिरिक्त टिप्पणी या ""
-सिर्फ़ valid JSON array दो, कोई markdown fence नहीं।`;
+ज़रूरी: name हमेशा हिंदी (देवनागरी) लिपि में हो। सिर्फ़ valid JSON array दो, कोई markdown fence नहीं।`;
 
 export default {
   async fetch(request, env) {
@@ -42,20 +42,16 @@ export default {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
       }
       if (!body.image) return new Response(JSON.stringify({ error: 'No image' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
-      const isAQKey = env.GEMINI_KEY && env.GEMINI_KEY.startsWith('AQ.');
-      const geminiUrl = isAQKey
-        ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-        : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_KEY}`;
-      const geminiHeaders = { 'Content-Type': 'application/json' };
-      if (isAQKey) geminiHeaders['Authorization'] = `Bearer ${env.GEMINI_KEY}`;
-
-      const geminiRes = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: geminiHeaders,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: 'image/jpeg', data: body.image } }] }]
-        })
-      });
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: 'image/jpeg', data: body.image } }] }]
+          })
+        }
+      );
       if (!geminiRes.ok) {
         const errBody = await geminiRes.json().catch(() => ({}));
         const msg = errBody?.error?.message || `Gemini HTTP ${geminiRes.status}`;
