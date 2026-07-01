@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v29';
+const APP_VERSION = 'v30';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -1148,8 +1148,10 @@ document.getElementById('cloudConfirmBtn')?.addEventListener('click', async () =
       }
     }
   } catch (err) {
-    cloudMsg('✗ गड़बड़ी: ' + err.message, 'err');
-    showToast('✗ गड़बड़ी: ' + err.message);
+    const frames = (err.stack || '').split('\n').slice(0, 4).join(' | ');
+    cloudMsg('✗ ' + err.message + ' @ ' + frames, 'err');
+    showToast('✗ ' + err.message);
+    console.error('cloud enable error', err);
   }
 });
 
