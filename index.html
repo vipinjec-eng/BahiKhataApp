@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>हिसाब बहीखाता</title>
+<meta name="theme-color" content="#1e5a46">
+<meta name="description" content="मैनुअल रजिस्टर की जगह आसान हिसाब बहीखाता ऐप">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>📖 हिसाब बहीखाता</h1>
+  <button id="settingsBtn" class="icon-btn" title="सेटिंग">⚙️</button>
+</header>
+
+<section class="summary">
+  <div class="sum-card sum-diya">
+    <span class="sum-label">कुल दिया</span>
+    <span class="sum-val" id="sumDiya">₹०</span>
+  </div>
+  <div class="sum-card sum-liya">
+    <span class="sum-label">कुल लिया</span>
+    <span class="sum-val" id="sumLiya">₹०</span>
+  </div>
+  <div class="sum-card sum-baki">
+    <span class="sum-label">बाकी</span>
+    <span class="sum-val" id="sumBaki">₹०</span>
+  </div>
+</section>
+
+<div class="scan-cta">
+  <button id="scanBtn" class="btn-scan">📸 फोटो/बिल से अपने-आप entries भरें</button>
+</div>
+
+<div class="toolbar">
+  <input type="search" id="searchBox" placeholder="🔍 नाम से खोजें...">
+  <button id="starFilterBtn" class="icon-btn" title="सिर्फ़ ज़रूरी">⭐</button>
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="entries">एंट्री</button>
+  <button class="tab-btn" data-tab="people">लोग</button>
+  <button class="tab-btn" data-tab="dates">📅 तारीख़ वार</button>
+</nav>
+
+<main id="content"></main>
+
+<button id="fabAdd" class="fab" title="नई एंट्री">＋</button>
+
+<footer class="footer">
+  <button id="exportBtn" class="footer-btn">💾 बैकअप फ़ाइल सेव करें</button>
+  <button id="importBtn" class="footer-btn">♻️ बैकअप से वापस लाएँ</button>
+  <input type="file" id="importFile" accept="application/json" hidden>
+  <div class="cloud-box">
+    <button id="cloudToggleBtn" class="footer-btn">☁️ अपने-आप बैकअप चालू करें</button>
+    <button id="cloudRestoreBtn" class="footer-btn">🔑 कोड से वापस लाएँ</button>
+    <div id="cloudStatus" class="cloud-status"></div>
+  </div>
+  <button id="whatsAppAllBtn" class="footer-btn btn-wa">🟢 पूरा हिसाब WhatsApp पर भेजें</button>
+</footer>
+
+<!-- Entry Form Modal -->
+<div id="formModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="formTitle">नई एंट्री</h2>
+    <label>नाम
+      <input type="text" id="fName" list="nameList" placeholder="जैसे: सुनील पाल">
+      <datalist id="nameList"></datalist>
+    </label>
+    <label>रकम (₹)
+      <input type="number" id="fAmount" inputmode="decimal" placeholder="0">
+    </label>
+    <div class="pill-row">
+      <button type="button" class="pill diya-pill active" data-dir="diya">दिया</button>
+      <button type="button" class="pill liya-pill" data-dir="liya">लिया</button>
+    </div>
+    <label>टाइप
+      <select id="fType">
+        <option value="udhar">उधार</option>
+        <option value="bikri">बिक्री</option>
+        <option value="hisab">हिसाब</option>
+      </select>
+    </label>
+    <label>तारीख़
+      <input type="date" id="fDate">
+    </label>
+    <label>नोट / remark
+      <input type="text" id="fNote" placeholder="वैकल्पिक">
+    </label>
+    <label class="star-check">
+      <input type="checkbox" id="fStar"> ⭐ ज़रूरी एंट्री (बड़ा amount)
+    </label>
+
+    <div class="photo-box">
+      <button type="button" id="photoPickBtn" class="footer-btn">📷 फोटो लें / चुनें</button>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+      <div id="photoPreviewWrap" class="hidden">
+        <img id="photoPreview" alt="फोटो">
+        <button type="button" id="photoRemoveBtn" class="footer-btn">🗑️ फोटो हटाएँ</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="deleteEntryBtn" class="btn-danger hidden">🗑️ हटाएँ</button>
+      <button type="button" id="cancelFormBtn" class="btn-secondary">रद्द करें</button>
+      <button type="button" id="saveEntryBtn" class="btn-primary">सेव करें</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename Modal -->
+<div id="renameModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>नाम सुधारें</h2>
+    <p id="renameInfo" class="muted"></p>
+    <label>नया नाम
+      <input type="text" id="renameInput">
+    </label>
+    <div class="modal-actions">
+      <button type="button" id="renameCancelBtn" class="btn-secondary">रद्द करें</button>
+      <button type="button" id="renameSaveBtn" class="btn-primary">सेव करें</button>
+    </div>
+  </div>
+</div>
+
+<!-- Photo Viewer -->
+<div id="photoViewer" class="modal hidden">
+  <div class="photo-viewer-inner">
+    <button id="photoViewerClose" class="icon-btn photo-close">✕</button>
+    <img id="photoViewerImg" alt="फोटो">
+  </div>
+</div>
+
+<!-- Scan Sheet -->
+<div id="scanModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>📸 फोटो/बिल से entries पढ़ें</h2>
+    <div id="scanStep1">
+      <p class="muted">रजिस्टर/बिल का एक पन्ना साफ़ रोशनी में फोटो खींचें या गैलरी से चुनें। एक बार में एक ही पन्ना रखें।</p>
+      <button type="button" id="scanPickBtn" class="footer-btn">📷 फोटो चुनें</button>
+      <input type="file" id="scanFileInput" accept="image/*" capture="environment" hidden>
+      <div id="scanPreviewWrap" class="hidden">
+        <img id="scanPreviewImg" alt="स्कैन फोटो">
+      </div>
+      <button type="button" id="scanRunBtn" class="btn-primary hidden">🔍 पढ़ना शुरू करें</button>
+      <div id="scanSpinner" class="spinner hidden">पढ़ रहे हैं...</div>
+      <p id="scanError" class="error-text hidden"></p>
+      <hr>
+      <button type="button" id="scanSettingsBtn" class="footer-btn">⚙️ Key / सर्वर सेटिंग</button>
+    </div>
+    <div id="scanReviewWrap" class="hidden">
+      <p class="muted">हर entry जाँच लें, ज़रूरत हो तो ठीक करें। जो नहीं जोड़नी उसका ✓ हटा दें।</p>
+      <div id="scanReviewList"></div>
+      <div class="modal-actions">
+        <button type="button" id="scanReviewCancelBtn" class="btn-secondary">रद्द करें</button>
+        <button type="button" id="scanReviewAddBtn" class="btn-primary">जोड़ें</button>
+      </div>
+    </div>
+    <button type="button" id="scanCloseBtn" class="btn-secondary close-bottom">बंद करें</button>
+  </div>
+</div>
+
+<!-- Settings Modal (Gemini key / server) -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>⚙️ सेटिंग</h2>
+    <p class="muted">फोटो से entries पढ़ने के लिए इनमें से एक तरीका चुनें — अपनी मुफ़्त Gemini key, या मुफ़्त सर्वर (अगर किसी ने बनाया है)।</p>
+    <label>अपनी मुफ़्त Gemini key
+      <input type="text" id="settingsGeminiKey" placeholder="AIza...">
+    </label>
+    <p class="muted small">key यहाँ से मुफ़्त मिलती है: aistudio.google.com/apikey</p>
+    <hr>
+    <label>मुफ़्त सर्वर URL (वैकल्पिक)
+      <input type="text" id="settingsServerUrl" placeholder="https://xxx.workers.dev">
+    </label>
+    <label>सर्वर पासवर्ड (अगर सेट किया हो)
+      <input type="text" id="settingsServerPass" placeholder="वैकल्पिक">
+    </label>
+    <div class="modal-actions">
+      <button type="button" id="settingsCancelBtn" class="btn-secondary">रद्द करें</button>
+      <button type="button" id="settingsSaveBtn" class="btn-primary">सेव करें</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud backup code modal -->
+<div id="cloudModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="cloudModalTitle">☁️ अपने-आप बैकअप</h2>
+    <p class="muted" id="cloudModalDesc"></p>
+    <label>बैकअप कोड
+      <input type="text" id="cloudCodeInput" placeholder="जैसे: ramesh-shop-2026">
+    </label>
+    <p class="muted small">यह कोड याद रखें — नए फ़ोन में डेटा वापस लाने के लिए यही चाबी है।</p>
+    <div class="modal-actions">
+      <button type="button" id="cloudCancelBtn" class="btn-secondary">रद्द करें</button>
+      <button type="button" id="cloudConfirmBtn" class="btn-primary">ठीक है</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

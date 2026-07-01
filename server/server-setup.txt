@@ -1,0 +1,102 @@
+════════════════════════════════════════════════
+  मुफ़्त सर्वर कैसे बनाएँ (Cloudflare Worker)
+════════════════════════════════════════════════
+
+इस सर्वर से दो फ़ायदे होंगे:
+ 1. Gemini key आपके पास — बाकी किसी के फ़ोन
+    में key नहीं डालनी पड़ेगी।
+ 2. अपने-आप cloud बैकअप चलेगा (backup code से)।
+
+ज़रूरत:
+ - Google account (Gemini key के लिए)
+ - Cloudflare account (सर्वर के लिए, मुफ़्त)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART A — Gemini key लें (मुफ़्त)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. aistudio.google.com/apikey खोलें
+2. Google account से sign in करें
+3. "Create API key" दबाएँ
+4. "AIza..." से शुरू होने वाली key कॉपी करें
+   (सुरक्षित रखें — किसी को न बताएँ)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART B — Cloudflare Worker बनाएँ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. dash.cloudflare.com पर जाएँ
+   → मुफ़्त account बनाएँ (कोई कार्ड नहीं)
+
+2. बाएँ menu में: Workers & Pages
+   → Create → Create Worker
+   → कोई नाम दें (जैसे: bahikhata-worker)
+   → Deploy
+
+3. "Edit code" दबाएँ
+   → सब मौजूदा code हटाएँ (Ctrl+A, Delete)
+   → इस फ़ोल्डर की worker.js फ़ाइल खोलें
+   → उसका पूरा code कॉपी करके यहाँ paste करें
+   → फिर Deploy
+
+4. Settings → Variables and Secrets:
+   → Add: Variable name = GEMINI_KEY
+            Type = Secret
+            Value = वो AIza... key
+   → Save
+
+   (वैकल्पिक) अगर password लगाना हो:
+   → Add: Variable name = APP_SECRET
+            Type = Secret
+            Value = कोई भी पासवर्ड
+   → Save
+
+5. Worker का URL कॉपी करें
+   (कुछ ऐसा: https://bahikhata-worker.xxx.workers.dev)
+
+6. ऐप में ⚙️ → "मुफ़्त सर्वर URL" में वो URL
+   (और पासवर्ड सेट किया हो तो वो भी) डालें → सेव
+
+बस — अब "📸 फोटो/बिल से entries भरें" बिना
+किसी की अपनी key के चलेगा।
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART C — अपने-आप बैकअप चालू करें (KV Storage)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+यह PART B के बाद करें।
+
+1. Cloudflare dashboard में:
+   Storage & Databases → KV
+   → Create namespace
+   → Name: bahi-backup → Add
+
+2. उसी Worker पर जाएँ:
+   Settings → Bindings → Add binding
+   → Type: KV namespace
+   → Variable name: BAHI_KV  (बिल्कुल यही)
+   → KV namespace: bahi-backup चुनें
+   → Save → Deploy
+
+3. ऐप में सबसे नीचे:
+   "☁️ अपने-आप बैकअप चालू करें" दबाएँ
+   → कोई भी बैकअप कोड चुनें (जैसे: ramesh2026)
+   → ठीक है
+
+अब हर बदलाव पर डेटा अपने-आप cloud में
+सेव होता रहेगा।
+
+नया फ़ोन लेने पर:
+  ऐप install करें → ⚙️ में सर्वर URL डालें
+  → "🔑 कोड से वापस लाएँ" → वही code डालें
+  → सारा हिसाब वापस!
+
+ज़रूरी: बैकअप code याद रखें।
+         cloud बैकअप entries रखता है,
+         फोटो नहीं — फोटो के लिए "💾 बैकअप
+         फ़ाइल सेव करें" से file backup लें।
+
+Cloudflare free plan: रोज़ 1,00,000 request —
+आपके रोज़मर्रा के काम के लिए बहुत ज़्यादा।
+
+════════════════════════════════════════════════
