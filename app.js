@@ -1,7 +1,16 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
+const APP_VERSION = 'v23';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
+
+// Surface any JS error on screen (helps diagnose stale-cache breakage)
+window.addEventListener('error', ev => {
+  try {
+    const t = document.getElementById('toast');
+    if (t) { t.textContent = '⚠️ ' + (ev.message || 'error'); t.classList.remove('hidden'); t.classList.add('show'); }
+  } catch {}
+});
 
 // ── DEVANAGARI HELPERS ─────────────────────────────────────────────────────
 const DEVA_DIGITS = ['०','१','२','३','४','५','६','७','८','९'];
@@ -1123,6 +1132,10 @@ function notifyDueReminders() {
   }
 }
 setTimeout(notifyDueReminders, 2500);
+
+// show running version so cache state is visible
+const _vt = document.getElementById('versionTag');
+if (_vt) _vt.textContent = 'प्रभुति ट्रेडर्स · ' + APP_VERSION;
 
 // ── SERVICE WORKER REGISTRATION ────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
