@@ -52,7 +52,11 @@ export default {
           })
         }
       );
-      if (!geminiRes.ok) return new Response(JSON.stringify({ error: 'Gemini error', status: geminiRes.status }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+      if (!geminiRes.ok) {
+        const errBody = await geminiRes.json().catch(() => ({}));
+        const msg = errBody?.error?.message || `Gemini HTTP ${geminiRes.status}`;
+        return new Response(JSON.stringify({ error: msg, status: geminiRes.status }), { status: 502, headers: { ...CORS, 'Content-Type': 'application/json' } });
+      }
       const data = await geminiRes.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
       return new Response(JSON.stringify({ text }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
