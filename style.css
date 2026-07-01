@@ -201,6 +201,29 @@ main { padding: 10px 12px; }
 .pd-type { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pd-amt { font-weight: 700; white-space: nowrap; }
 
+/* EARNINGS TAB */
+.earn-quick { background:#fff; border-radius:var(--radius); padding:14px; margin:10px 14px; box-shadow:var(--shadow); border:1.5px solid var(--gold); }
+.earn-today-label { font-size:.85rem; color:var(--muted); }
+.earn-today-val { font-size:1.7rem; font-weight:800; color:var(--gold); margin:2px 0 10px; }
+.earn-add-row { display:flex; flex-direction:column; gap:8px; }
+.earn-add-row input { padding:10px; border:1.5px solid var(--border); border-radius:8px; font-size:1rem; }
+.month-card { background:#fff; border-radius:var(--radius); padding:12px; margin:0 14px 10px; box-shadow:var(--shadow); }
+.month-title { font-weight:700; font-size:1rem; color:var(--green); margin-bottom:8px; }
+.month-summary { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.ms-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:8px; font-size:.85rem; }
+.ms-item b { font-size:.95rem; }
+.ms-earn { background:#fff4d6; color:#8a6d00; }
+.ms-diya { background:#e6f4ec; color:#1e7d4a; }
+.ms-liya { background:#fdecea; color:#b02a12; }
+.ms-baki { background:#eef1f4; color:#333; }
+.month-earn-details { margin-top:8px; }
+.month-earn-details summary { cursor:pointer; font-size:.82rem; color:var(--green); font-weight:600; padding:4px 0; }
+.earn-row { display:grid; grid-template-columns:auto 1fr auto auto; gap:8px; align-items:center; padding:5px 0; font-size:.82rem; border-bottom:1px dashed #f0f0f0; }
+.earn-date { color:var(--muted); font-weight:600; white-space:nowrap; }
+.earn-note { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.earn-amt { font-weight:700; color:var(--gold); white-space:nowrap; }
+.earn-row .del-btn { background:none; border:none; cursor:pointer; }
+
 /* CLOUD MSG */
 .cloud-msg { font-size:.82rem; margin:6px 0; min-height:1.1em; text-align:center; }
 .cloud-msg.ok { color:#1e7d4a; font-weight:600; }

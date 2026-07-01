@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v25';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -63,6 +63,7 @@ function clearBackupCode() {
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let entries = JSON.parse(localStorage.getItem('bahi_entries') || '[]');
+let earnings = JSON.parse(localStorage.getItem('bahi_earnings') || '[]');
 let activeTab = 'entries';
 let searchQuery = '';
 let starOnly = false;
@@ -191,7 +192,96 @@ function render() {
 
   if (activeTab === 'entries') renderEntries(list);
   else if (activeTab === 'people') renderPeople(list);
+  else if (activeTab === 'earnings') renderEarnings();
   else renderDates(list);
+}
+
+function saveEarnings() {
+  localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
+  render();
+  schedulePushBackup();
+}
+
+function monthLabel(ym) {
+  const MONTHS = ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'];
+  const [y, m] = ym.split('-');
+  return `${MONTHS[+m - 1]} ${toDevNum(y)}`;
+}
+
+function renderEarnings() {
+  const content = document.getElementById('content');
+  const today = todayISO();
+  const todayTotal = earnings.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
+
+  // group earnings + ledger by month (YYYY-MM)
+  const months = {};
+  earnings.forEach(e => {
+    const ym = e.date.slice(0, 7);
+    if (!months[ym]) months[ym] = { earn: 0, diya: 0, liya: 0 };
+    months[ym].earn += e.amount;
+  });
+  entries.forEach(e => {
+    const ym = e.date.slice(0, 7);
+    if (!months[ym]) months[ym] = { earn: 0, diya: 0, liya: 0 };
+    if (e.direction === 'diya') months[ym].diya += e.amount;
+    else months[ym].liya += e.amount;
+  });
+  const sortedMonths = Object.keys(months).sort((a, b) => b.localeCompare(a));
+
+  const quickAdd = `<div class="earn-quick">
+    <div class="earn-today-label">आज की कमाई <span class="muted">(${fmtDate(today)})</span></div>
+    <div class="earn-today-val">${fmtAmount(todayTotal)}</div>
+    <div class="earn-add-row">
+      <input type="text" id="earnAmount" inputmode="numeric" placeholder="₹ रकम" style="text-align:right;letter-spacing:1px">
+      <input type="text" id="earnNote" placeholder="नोट (वैकल्पिक)">
+      <button id="earnAddBtn" class="btn-primary">➕ जोड़ें</button>
+    </div>
+  </div>`;
+
+  const monthCards = sortedMonths.length ? sortedMonths.map(ym => {
+    const m = months[ym];
+    const baki = m.diya - m.liya;
+    const monthEarns = earnings.filter(e => e.date.slice(0, 7) === ym).sort((a, b) => b.date.localeCompare(a.date));
+    const earnRows = monthEarns.map(e => `<div class="earn-row" data-earn-del="${esc(e.id)}">
+        <span class="earn-date">${fmtDate(e.date)}</span>
+        <span class="earn-note">${e.note ? esc(e.note) : 'कमाई'}</span>
+        <span class="earn-amt">${fmtAmount(e.amount)}</span>
+        <button class="del-btn" title="हटाएँ">🗑️</button>
+      </div>`).join('');
+    return `<div class="month-card">
+      <div class="month-title">${monthLabel(ym)}</div>
+      <div class="month-summary">
+        <div class="ms-item ms-earn"><span>💰 कमाई</span><b>${fmtAmount(m.earn)}</b></div>
+        <div class="ms-item ms-diya"><span>दिया</span><b>${fmtAmount(m.diya)}</b></div>
+        <div class="ms-item ms-liya"><span>लिया</span><b>${fmtAmount(m.liya)}</b></div>
+        <div class="ms-item ms-baki"><span>बाकी</span><b>${(baki<0?'-':'')}${fmtAmount(Math.abs(baki))}</b></div>
+      </div>
+      ${earnRows ? `<details class="month-earn-details"><summary>कमाई की एंट्री (${toDevNum(monthEarns.length)})</summary>${earnRows}</details>` : ''}
+    </div>`;
+  }).join('') : `<div class="empty-state"><span class="emoji">💰</span>अभी कोई कमाई/हिसाब नहीं।</div>`;
+
+  content.innerHTML = quickAdd + monthCards;
+
+  const amtInp = document.getElementById('earnAmount');
+  amtInp.addEventListener('input', e => {
+    const pos = e.target.selectionStart;
+    e.target.value = toDevNum(e.target.value.replace(/[^\d०-९]/g, ''));
+    e.target.setSelectionRange(pos, pos);
+  });
+  document.getElementById('earnAddBtn').addEventListener('click', () => {
+    const amount = parseFloat(fromDevNum(amtInp.value));
+    if (!amount || amount <= 0) { showToast('सही रकम लिखें'); return; }
+    const note = document.getElementById('earnNote').value.trim();
+    earnings.push({ id: uid(), date: todayISO(), amount, note });
+    saveEarnings();
+    showToast('आज की कमाई जुड़ गई ✓');
+  });
+  content.querySelectorAll('[data-earn-del]').forEach(row => {
+    row.querySelector('.del-btn').addEventListener('click', () => {
+      const idx = earnings.findIndex(x => x.id === row.dataset.earnDel);
+      if (idx !== -1) { earnings.splice(idx, 1); saveEarnings(); showToast('कमाई हटाई ✓'); }
+    });
+  });
 }
 
 function renderReminders() {
@@ -905,7 +995,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
   const photos = await getAllPhotos();
   const photoMap = {};
   photos.forEach(p => { photoMap[p.id] = p.data; });
-  const blob = new Blob([JSON.stringify({ entries, photos: photoMap })], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ entries, earnings, photos: photoMap })], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -924,16 +1014,19 @@ document.getElementById('importFile').addEventListener('change', e => {
     try {
       const data = JSON.parse(ev.target.result);
       if (!Array.isArray(data.entries)) throw new Error('अमान्य फ़ाइल');
-      if (!confirm(`इस बैकअप से ${data.entries.length} entries वापस लाएँ? मौजूदा डेटा बदल जाएगा।`)) return;
       entries = data.entries;
       localStorage.setItem('bahi_entries', JSON.stringify(entries));
+      if (Array.isArray(data.earnings)) {
+        earnings = data.earnings;
+        localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
+      }
       if (data.photos && typeof data.photos === 'object') {
         for (const [id, base64] of Object.entries(data.photos)) {
           await savePhoto(id, base64);
         }
       }
       render();
-      showToast('बैकअप से डेटा वापस आ गया ✓');
+      showToast(`बैकअप से ${toDevNum(entries.length)} entries वापस आईं ✓`);
     } catch (err) { showToast('बैकअप फ़ाइल गलत है: ' + err.message); }
   };
   reader.readAsText(file);
@@ -1035,7 +1128,7 @@ async function pushCloudBackupNow(report) {
     const res = await fetch(serverUrl.replace(/\/$/, '') + '/backup/' + encodeURIComponent(code), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries, password: serverPass })
+      body: JSON.stringify({ entries, earnings, password: serverPass })
     });
     if (res.ok) {
       const now = new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
@@ -1065,6 +1158,10 @@ async function cloudRestore(code) {
     if (!Array.isArray(data.entries)) { cloudMsg('✗ बैकअप डेटा अमान्य है', 'err'); return; }
     entries = data.entries;
     localStorage.setItem('bahi_entries', JSON.stringify(entries));
+    if (Array.isArray(data.earnings)) {
+      earnings = data.earnings;
+      localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
+    }
     saveBackupCode(code);
     cloudEnabled = true;
     render();
@@ -1127,6 +1224,10 @@ document.getElementById('fAmount')?.addEventListener('input', e => {
         if (Array.isArray(data.entries) && data.entries.length > 0) {
           entries = data.entries;
           localStorage.setItem('bahi_entries', JSON.stringify(entries));
+          if (Array.isArray(data.earnings)) {
+            earnings = data.earnings;
+            localStorage.setItem('bahi_earnings', JSON.stringify(earnings));
+          }
           cloudEnabled = true;
           render();
           showToast(`☁️ ${toDevNum(entries.length)} entries cloud से वापस आईं ✓`);
