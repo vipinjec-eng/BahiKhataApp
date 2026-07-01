@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v41';
+const APP_VERSION = 'v42';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -243,7 +243,7 @@ function renderEarnings() {
     <div class="pd-list" style="margin-top:8px">${earnRows}</div>
   </div>`;
 
-  const monthlyBtn = `<button id="openMonthlyBtn" class="footer-btn" style="margin:0 14px 12px;width:calc(100% - 28px)">📊 मासिक हिसाब देखें</button>`;
+  const monthlyBtn = `<button id="openMonthlyBtn" class="monthly-btn">📊 मासिक हिसाब देखें</button>`;
 
   content.innerHTML = quickAdd + todayCard + monthlyBtn;
 
