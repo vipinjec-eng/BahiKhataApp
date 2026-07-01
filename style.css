@@ -210,14 +210,19 @@ main { padding: 10px 12px; }
 .earn-add-row { display:flex; flex-direction:column; gap:8px; }
 .earn-add-row input { padding:10px; border:1.5px solid var(--border); border-radius:8px; font-size:1rem; }
 .month-card { background:#fff; border-radius:var(--radius); padding:12px; margin:0 14px 10px; box-shadow:var(--shadow); }
-.month-title { font-weight:700; font-size:1rem; color:var(--green); margin-bottom:8px; }
-.month-summary { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.ms-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-radius:8px; font-size:.85rem; }
-.ms-item b { font-size:.95rem; }
-.ms-earn { background:#fff4d6; color:#8a6d00; }
-.ms-diya { background:#e6f4ec; color:#1e7d4a; }
-.ms-liya { background:#fdecea; color:#b02a12; }
-.ms-baki { background:#eef1f4; color:#333; }
+.month-title { font-weight:700; font-size:1.1rem; color:var(--green); margin-bottom:10px; }
+.month-summary { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ms-item { display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:12px 14px; border-radius:12px; font-size:1rem; font-weight:600; border:1.5px solid transparent; }
+.ms-item span { font-size:.9rem; opacity:.85; }
+.ms-item b { font-size:1.35rem; font-weight:800; }
+.ms-earn { background:#fff0c2; color:#8a6d00; border-color:#e8c964; }
+.ms-diya { background:#d6efe0; color:#146b3a; border-color:#8dd0aa; }
+.ms-liya { background:#fbdcd7; color:#a3220f; border-color:#eaa79c; }
+.ms-baki { background:#e3e8ee; color:#2a3644; border-color:#b8c2ce; }
+
+/* bigger emphasis inside monthly modal */
+#monthlyList .month-title { font-size:1.2rem; }
+#monthlyList .ms-item b { font-size:1.45rem; }
 .month-earn-details { margin-top:8px; }
 .month-earn-details summary { cursor:pointer; font-size:.82rem; color:var(--green); font-weight:600; padding:4px 0; }
 .earn-row { display:grid; grid-template-columns:auto 1fr auto auto; gap:8px; align-items:center; padding:5px 0; font-size:.82rem; border-bottom:1px dashed #f0f0f0; }
