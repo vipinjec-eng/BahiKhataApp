@@ -34,17 +34,35 @@ function uid() {
 const TYPE_LABELS = { udhar:'उधार', bikri:'बिक्री', hisab:'हिसाब' };
 const WA_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" fill="#25d366" style="vertical-align:middle;margin-right:4px"><path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.12.55 4.18 1.6 6L0 24l6.17-1.58A12.04 12.04 0 0 0 12 24c6.63 0 12-5.37 12-12a11.94 11.94 0 0 0-3.48-8.52zM12 22c-1.85 0-3.64-.5-5.2-1.44l-.37-.22-3.66.94.97-3.56-.24-.38A9.97 9.97 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.47-7.54c-.3-.15-1.76-.87-2.03-.97s-.47-.15-.67.15c-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.78-1.67-2.08-.18-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52s-.67-1.6-.92-2.2c-.24-.58-.49-.5-.67-.5l-.57-.01c-.2 0-.52.07-.79.37s-1.04 1.02-1.04 2.48 1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.18-1.41-.07-.13-.27-.2-.57-.35z"/></svg>`;
 
+// ── BACKUP CODE HELPERS (localStorage + cookie fallback) ───────────────────
+function getBackupCode() {
+  let code = localStorage.getItem('bahi_backup_code');
+  if (!code) {
+    const m = document.cookie.match(/bahi_code=([^;]+)/);
+    if (m) { code = decodeURIComponent(m[1]); saveBackupCode(code); }
+  }
+  return code || '';
+}
+function saveBackupCode(code) {
+  saveBackupCode(code);
+  document.cookie = `bahi_code=${encodeURIComponent(code)};max-age=31536000;path=/;SameSite=Strict`;
+}
+function clearBackupCode() {
+  localStorage.removeItem('bahi_backup_code');
+  document.cookie = 'bahi_code=;max-age=0;path=/';
+}
+
 // ── STATE ──────────────────────────────────────────────────────────────────
 let entries = JSON.parse(localStorage.getItem('bahi_entries') || '[]');
 let activeTab = 'entries';
 let searchQuery = '';
 let starOnly = false;
 let editingId = null;
-let pendingPhotoBase64 = null; // photo loaded in form but not yet committed to IndexedDB
+let pendingPhotoBase64 = null;
 let pendingPhotoEntryId = null;
 let scanPreviewBase64 = null;
 let scanResultRows = [];
-let cloudEnabled = !!localStorage.getItem('bahi_backup_code');
+let cloudEnabled = !!getBackupCode();
 let cloudDirty = false;
 let cloudTimer = null;
 let selectedDateFilter = '';
@@ -818,7 +836,7 @@ document.getElementById('importFile').addEventListener('change', e => {
 
 // ── CLOUD BACKUP ───────────────────────────────────────────────────────────
 function updateCloudStatus() {
-  const code = localStorage.getItem('bahi_backup_code');
+  const code = getBackupCode();
   const lastTime = localStorage.getItem('bahi_last_backup_time');
   const status = document.getElementById('cloudStatus');
   const btn = document.getElementById('cloudToggleBtn');
@@ -834,12 +852,12 @@ function updateCloudStatus() {
 }
 
 document.getElementById('cloudToggleBtn').addEventListener('click', () => {
-  const code = localStorage.getItem('bahi_backup_code');
+  const code = getBackupCode();
   if (code) {
     // show options: change or disable
     const action = confirm('बैकअप कोड बदलना चाहते हैं? OK = बदलें, Cancel = बैकअप बंद करें');
     if (action) openCloudModal('change');
-    else { localStorage.removeItem('bahi_backup_code'); updateCloudStatus(); showToast('अपने-आप बैकअप बंद हुआ'); }
+    else { clearBackupCode(); updateCloudStatus(); showToast('अपने-आप बैकअप बंद हुआ'); }
   } else {
     openCloudModal('enable');
   }
@@ -873,7 +891,7 @@ document.getElementById('cloudConfirmBtn').addEventListener('click', async () =>
   if (mode === 'restore') {
     await cloudRestore(code);
   } else {
-    localStorage.setItem('bahi_backup_code', code);
+    saveBackupCode(code);
     updateCloudStatus();
     document.getElementById('cloudModal').classList.add('hidden');
     pushCloudBackupNow();
@@ -882,7 +900,7 @@ document.getElementById('cloudConfirmBtn').addEventListener('click', async () =>
 });
 
 async function pushCloudBackupNow() {
-  const code = localStorage.getItem('bahi_backup_code');
+  const code = getBackupCode();
   const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
   const serverPass = localStorage.getItem('bahi_server_pass') || '';
   if (!code) return;
@@ -912,7 +930,7 @@ async function cloudRestore(code) {
     if (!confirm(`${data.entries.length} entries वापस लाएँ? मौजूदा डेटा बदल जाएगा।`)) return;
     entries = data.entries;
     localStorage.setItem('bahi_entries', JSON.stringify(entries));
-    localStorage.setItem('bahi_backup_code', code);
+    saveBackupCode(code);
     render();
     updateCloudStatus();
     document.getElementById('cloudModal').classList.add('hidden');
@@ -921,7 +939,7 @@ async function cloudRestore(code) {
 }
 
 function schedulePushBackup() {
-  if (!cloudEnabled || !localStorage.getItem('bahi_backup_code')) return;
+  if (!cloudEnabled || !getBackupCode()) return;
   clearTimeout(cloudTimer);
   cloudTimer = setTimeout(pushCloudBackupNow, 5000);
 }
@@ -947,6 +965,27 @@ document.getElementById('fAmount').addEventListener('input', e => {
   e.target.value = converted;
   e.target.setSelectionRange(pos, pos);
 });
+
+// ── AUTO-RESTORE ON STARTUP ────────────────────────────────────────────────
+(async () => {
+  const code = getBackupCode();
+  if (code && entries.length === 0) {
+    try {
+      const serverUrl = localStorage.getItem('bahi_server_url') || DEFAULT_SERVER_URL;
+      const res = await fetch(`${serverUrl}/backup/${encodeURIComponent(code)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.entries) && data.entries.length > 0) {
+          entries = data.entries;
+          localStorage.setItem('bahi_entries', JSON.stringify(entries));
+          cloudEnabled = true;
+          render();
+          showToast(`☁️ ${toDevNum(entries.length)} entries cloud से वापस आईं ✓`);
+        }
+      }
+    } catch {}
+  }
+})();
 
 // ── SERVICE WORKER REGISTRATION ────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
