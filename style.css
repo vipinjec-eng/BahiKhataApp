@@ -478,7 +478,9 @@ main { padding: 10px 12px; }
 .footer-btn:active { background: #e5e7eb; }
 .btn-wa { background: #e8f8ee; border-color: #25d366; color: #128c7e; }
 .cloud-box { display: flex; flex-direction: column; gap: 6px; }
-.cloud-status { font-size: .8rem; color: var(--muted); text-align: center; }
+.cloud-status { font-size: .8rem; color: var(--muted); text-align: center; padding: 2px 4px; }
+.cloud-status.ok { color: #1e7d4a; font-weight: 600; }
+.cloud-status.warn { color: #b02a12; font-weight: 600; background: #fdecea; border-radius: 8px; padding: 6px 8px; }
 
 /* TOAST */
 .toast {

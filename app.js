@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v37';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -1083,11 +1083,13 @@ function updateCloudStatus() {
   const status = document.getElementById('cloudStatus');
   const btn = document.getElementById('cloudToggleBtn');
   if (code) {
-    status.textContent = lastTime ? `☁️ सर्वर पे आख़िरी बैकअप: ${lastTime}` : '☁️ सर्वर बैकअप चालू है';
+    status.textContent = lastTime ? `☁️ सर्वर पे आख़िरी बैकअप: ${lastTime} · कोड: ${code}` : `☁️ सर्वर बैकअप चालू · कोड: ${code}`;
+    status.className = 'cloud-status ok';
     btn.textContent = '☁️ सर्वर बैकअप कोड बदलें / बंद करें';
     cloudEnabled = true;
   } else {
-    status.textContent = '';
+    status.textContent = '⚠️ सर्वर बैकअप बंद है — data सुरक्षित नहीं। ऊपर वाला बटन दबाकर चालू करें।';
+    status.className = 'cloud-status warn';
     btn.textContent = '☁️ सर्वर पे बैकअप चालू करें';
     cloudEnabled = false;
   }
