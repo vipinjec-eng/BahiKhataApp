@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v45';
+const APP_VERSION = 'v46';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -76,6 +76,7 @@ let cloudEnabled = !!getBackupCode();
 let cloudDirty = false;
 let cloudTimer = null;
 let selectedDateFilter = '';
+let entryShowLimit = 60;  // एंट्री tab: show recent N, load more on demand
 
 // ── IndexedDB PHOTO STORE ──────────────────────────────────────────────────
 let photoDB = null;
@@ -364,15 +365,24 @@ function renderEntries(list) {
     content.innerHTML = `<div class="empty-state"><span class="emoji">📒</span>कोई एंट्री नहीं है।<br>＋ दबाकर पहली एंट्री जोड़ें।</div>`;
     return;
   }
-  // group by date descending
+  // newest first (by date, then by id)
+  const sorted = list.slice().sort((a, b) => (b.date.localeCompare(a.date)) || String(b.id||'').localeCompare(String(a.id||'')));
+  const searching = !!searchQuery || starOnly;
+  const shown = searching ? sorted : sorted.slice(0, entryShowLimit);
+  const remaining = sorted.length - shown.length;
+
+  // group shown entries by date descending
   const groups = {};
-  list.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
+  shown.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
   const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
   content.innerHTML = sortedDates.map(date => `
     <div class="date-group">
       <div class="date-header">${fmtDate(date)}</div>
       ${groups[date].map(e => entryCard(e)).join('')}
-    </div>`).join('');
+    </div>`).join('')
+    + (remaining > 0 ? `<button id="loadMoreBtn" class="footer-btn" style="margin:6px 14px 14px;width:calc(100% - 28px)">⬇️ और पुरानी entries दिखाएँ (${toDevNum(remaining)} बाकी)</button>` : '')
+    + (!searching && sorted.length > 60 ? `<div class="muted" style="text-align:center;font-size:.72rem;padding:0 0 10px">कुल ${toDevNum(sorted.length)} entries · नाम से खोजने पर सभी दिखेंगी</div>` : '');
+
   content.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openForm(entries.find(e => e.id === btn.dataset.edit)));
   });
@@ -382,6 +392,8 @@ function renderEntries(list) {
   content.querySelectorAll('[data-del]').forEach(btn => {
     btn.addEventListener('click', () => deleteEntryById(btn.dataset.del));
   });
+  const lm = document.getElementById('loadMoreBtn');
+  if (lm) lm.addEventListener('click', () => { entryShowLimit += 60; renderEntries(allFiltered()); });
 }
 
 function reminderChip(e) {
@@ -695,6 +707,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeTab = btn.dataset.tab;
+    entryShowLimit = 60;
     render();
   });
 });
