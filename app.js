@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v46';
+const APP_VERSION = 'v47';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -507,7 +507,10 @@ function renderDates(list) {
     const filtered = selectedDateFilter ? list.filter(e => e.date === selectedDateFilter) : list;
     const groups = {};
     filtered.forEach(e => { (groups[e.date] = groups[e.date] || []).push(e); });
-    const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+    const allDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+    // no filter → show only last 5 dates; use date picker for older
+    const sortedDates = selectedDateFilter ? allDates : allDates.slice(0, 5);
+    const hiddenDates = allDates.length - sortedDates.length;
 
     const cardsHtml = sortedDates.length ? sortedDates.map(date => {
       const dayEntries = groups[date];
@@ -528,7 +531,11 @@ function renderDates(list) {
       </div>`;
     }).join('') : `<div class="empty-state"><span class="emoji">📅</span>इस तारीख़ पर कोई एंट्री नहीं।</div>`;
 
-    content.innerHTML = picker + cardsHtml;
+    const moreNote = (!selectedDateFilter && hiddenDates > 0)
+      ? `<div class="muted" style="text-align:center;font-size:.78rem;padding:4px 14px 12px">पिछली ५ तारीख़ें दिख रही हैं · और ${toDevNum(hiddenDates)} तारीख़ें हैं — ऊपर 📅 से कोई भी तारीख़ चुनें</div>`
+      : '';
+
+    content.innerHTML = picker + (selectedDateFilter ? '' : `<div class="date-hint">📅 पिछली ५ तारीख़ें — किसी और दिन के लिए ऊपर से तारीख़ चुनें</div>`) + cardsHtml + moreNote;
     content.querySelectorAll('[data-wa-date]').forEach(btn => btn.addEventListener('click', () => waShareDate(btn.dataset.waDate)));
     content.querySelectorAll('[data-id]').forEach(row => row.addEventListener('click', () => {
       const e = entries.find(x => x.id === row.dataset.id);
