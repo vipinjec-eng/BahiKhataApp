@@ -1,7 +1,7 @@
 /* ── हिसाब बहीखाता ── */
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
-const APP_VERSION = 'v47';
+const APP_VERSION = 'v48';
 const DEFAULT_SERVER_URL = 'https://bahikhataworker.vipinjec.workers.dev';
 
 // Surface any JS error on screen (helps diagnose stale-cache breakage)
@@ -76,7 +76,7 @@ let cloudEnabled = !!getBackupCode();
 let cloudDirty = false;
 let cloudTimer = null;
 let selectedDateFilter = '';
-let entryShowLimit = 60;  // एंट्री tab: show recent N, load more on demand
+let entryShowLimit = 30;  // एंट्री tab: show recent N, load more on demand
 
 // ── IndexedDB PHOTO STORE ──────────────────────────────────────────────────
 let photoDB = null;
@@ -381,7 +381,7 @@ function renderEntries(list) {
       ${groups[date].map(e => entryCard(e)).join('')}
     </div>`).join('')
     + (remaining > 0 ? `<button id="loadMoreBtn" class="footer-btn" style="margin:6px 14px 14px;width:calc(100% - 28px)">⬇️ और पुरानी entries दिखाएँ (${toDevNum(remaining)} बाकी)</button>` : '')
-    + (!searching && sorted.length > 60 ? `<div class="muted" style="text-align:center;font-size:.72rem;padding:0 0 10px">कुल ${toDevNum(sorted.length)} entries · नाम से खोजने पर सभी दिखेंगी</div>` : '');
+    + (!searching && sorted.length > 30 ? `<div class="muted" style="text-align:center;font-size:.72rem;padding:0 0 10px">कुल ${toDevNum(sorted.length)} entries · नाम से खोजने पर सभी दिखेंगी</div>` : '');
 
   content.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openForm(entries.find(e => e.id === btn.dataset.edit)));
@@ -393,7 +393,7 @@ function renderEntries(list) {
     btn.addEventListener('click', () => deleteEntryById(btn.dataset.del));
   });
   const lm = document.getElementById('loadMoreBtn');
-  if (lm) lm.addEventListener('click', () => { entryShowLimit += 60; renderEntries(allFiltered()); });
+  if (lm) lm.addEventListener('click', () => { entryShowLimit += 30; renderEntries(allFiltered()); });
 }
 
 function reminderChip(e) {
@@ -714,7 +714,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeTab = btn.dataset.tab;
-    entryShowLimit = 60;
+    entryShowLimit = 30;
     render();
   });
 });
